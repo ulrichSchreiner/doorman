@@ -1,0 +1,13 @@
+session_name: doorman
+windows:
+  - window_name: session
+    layout: tiled
+    panes:
+      - shell_command:
+        - make dev-frontend
+      - shell_command:
+        - make dev-doorman
+      - shell_command:
+        - make testldap
+      - shell_command:
+        - make redis-ephemeral

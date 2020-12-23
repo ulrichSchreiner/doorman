@@ -1,0 +1,190 @@
+{
+    "logging": {
+        "logs": {
+            "default": {
+                "level": "debug"
+            }
+        }
+    },
+    "admin": {
+        "disabled": true
+    },
+    "apps": {
+        "http": {
+            "servers": {
+                "example": {
+                    "listen": [
+                        ":2015"
+                    ],
+                    "routes": [
+                        {
+                            "handle": [
+                                {
+                                    "handler": "twofactor",
+                                    "imprint_url": "http://www.example.com/imprint",
+                                    "privacy_policy_url": "http://www.example.com/privacy",
+                                    "spacing": "",
+                                    "operation_mode": "token",
+                                    "issuer": "Doorman",
+                                    "issuer_base": "https://46fecbdf0fea.ngrok.io",
+                                    "token_duration": "60s",
+                                    "access_duration": "60s",
+                                    "users": [
+                                        {
+                                            "type": "list",
+                                            "name": "static users",
+                                            "spec": [
+                                                {
+                                                    "name": "Max Muster",
+                                                    "uid": "mmu",
+                                                    "mobile": "0049123456789",
+                                                    "email": "max.muster@example.com"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "type": "file",
+                                            "name": "file users",
+                                            "spec": {
+                                                "path": "test/users.json",
+                                                "watch": true
+                                            }
+                                        },
+                                        {
+                                            "type": "command",
+                                            "name": "external command",
+                                            "spec": {
+                                                "command": "/home/usc/tmp/test.sh"
+                                            }
+                                        },
+                                        {
+                                            "type": "ldap",
+                                            "name": "test ldap backend",
+                                            "spec": {
+                                                "address": "localhost:6389",
+                                                "search_base": "dc=example,dc=org",
+                                                "user": "cn=admin,dc=example,dc=org",
+                                                "password": "test1234",
+                                                "tls": false,
+                                                "insecure_skip": true
+                                            }
+                                        }
+                                    ],
+                                    "whitelist": [
+                                        {
+                                            "type": "list",
+                                            "name": "static list of ips",
+                                            "spec": [
+                                                "127.0.0.2",
+                                                "::2"
+                                            ]
+                                        }
+                                    ],
+                                    "cookie_block": "S+lyDRL0/sFKNmTtiD2/T4W8J5x3ur2zQY6jK4J08PM=",
+                                    "cookie_hash": "tga7Y9FC/4R8lm6abiPZCbqOYS4Pz4H4ql6AoIx6yMMmLSZhrS4ZihiLKlTl5Bcjx8fBkuWE4FDkvdISeVEjNQ==",
+                                    "insecure_cookie": true,
+                                    "channels": [
+                                        "standard-smtp",
+                                        "smsgateway",
+                                        "local url tester",
+                                        "clipboard",
+                                        "mailgun"
+                                    ],
+                                    "messenger_config": {
+                                        "burst": 20,
+                                        "rate": "1s",
+                                        "from": {
+                                            "name": "Doorman",
+                                            "email": "doorman@innuendo.de"
+                                        },
+                                        "transports": [
+                                            {
+                                                "type": "url",
+                                                "name": "smsgateway",
+                                                "spec": {
+                                                    "url_template": "{env.SMS_GATEWAY_URL1}&body=\\{\\{.message}}&from=Doorman&to=\\{\\{.tomobile}}",
+                                                    "method": "GET",
+                                                    "insecure": false
+                                                }
+                                            },
+                                            {
+                                                "type": "command",
+                                                "name": "clipboard",
+                                                "spec": {
+                                                    "command": "/usr/bin/xsel",
+                                                    "use_stdin": true,
+                                                    "args": [
+                                                        "-i",
+                                                        "-b"
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "type": "url",
+                                                "name": "local url tester",
+                                                "spec": {
+                                                    "url_template": "http://localhost:9999?to=\\{\\{.tomobile}}&msg=Token:+\\{\\{.message}}",
+                                                    "method": "GET",
+                                                    "insecure": false
+                                                }
+                                            },
+                                            {
+                                                "type": "url",
+                                                "name": "mailgun",
+                                                "spec": {
+                                                    "url_template": "https://api.mailgun.net/v3/{env.MG_DOMAIN}/messages",
+                                                    "body_template": "from=Token Verifier %3Cauth@{env.MG_DOMAIN}%3E&to=\\{\\{.to}}&text=\\{\\{.message}}&subject='Your Login'",
+                                                    "method": "POST",
+                                                    "insecure": false,
+                                                    "auth_user": "api",
+                                                    "auth_password": "{env.MG_API_KEY}",
+                                                    "headers": {
+                                                        "Content-Type": [
+                                                            "application/x-www-form-urlencoded"
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "type": "email",
+                                                "name": "standard-smtp",
+                                                "spec": {
+                                                    "host": "{env.SMTP_SERVER}",
+                                                    "user": "{env.SMTP_SERVER_USER}",
+                                                    "password": "{env.SMTP_SERVER_PASSWORD}"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    "store_settings": {
+                                        "persistent_type": "redis",
+                                        "memory_cache_mb": 300,
+                                        "redis": {
+                                            "address": "localhost:16379"
+                                        },
+                                        "otp": {
+                                            "timeout": "5m",
+                                            "transport": {
+                                                "type": "email",
+                                                "name": "my-smtp",
+                                                "spec": {
+                                                    "host": "{env.SMTP_SERVER}",
+                                                    "user": "{env.SMTP_SERVER_USER}",
+                                                    "password": "{env.SMTP_SERVER_PASSWORD}"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "handler": "static_response",
+                                    "body": "Hello, world!"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,70 @@
+dn: ou=Users,dc=example,dc=org
+changetype: add
+objectclass: organizationalUnit
+ou: Users
+
+dn: cn=test,ou=Users,dc=example,dc=org
+changetype: add
+objectclass: inetOrgPerson
+cn: test
+givenname: test
+uid: test
+sn: Test
+displayname: Test User
+mail: test@example.org
+mobile: +49 172 123456
+userpassword: test_pass
+
+dn: cn=developer,ou=Users,dc=example,dc=org
+changetype: add
+objectclass: inetOrgPerson
+cn: developer
+givenname: developer
+uid: developer
+sn: Developer
+displayname: Developer User
+mail: developer@example.org
+mobile: +49 172 1234568
+userpassword: developer_pass
+
+dn: cn=maintainer,ou=Users,dc=example,dc=org
+changetype: add
+objectclass: inetOrgPerson
+cn: maintainer
+givenname: maintainer
+uid: maintainer
+sn: Maintainer
+displayname: Maintainer User
+mail: maintainer@example.org
+mobile: +49 172 1234569
+userpassword: maintainer_pass
+
+dn: cn=adminx,ou=Users,dc=example,dc=org
+changetype: add
+objectclass: inetOrgPerson
+cn: adminx
+givenname: adminx
+uid: adminx
+sn: Admin
+displayname: Admin
+mail: adminx@example.org
+mobile: +49 172 1234560
+userpassword: adminx_pass
+
+dn: ou=Groups,dc=example,dc=org
+changetype: add
+objectclass: organizationalUnit
+ou: Groups
+
+dn: cn=Admins,ou=Groups,dc=example,dc=org
+changetype: add
+cn: Admins
+objectclass: groupOfUniqueNames
+uniqueMember: cn=adminx,ou=Users,dc=example,dc=org
+
+dn: cn=Maintaners,ou=Groups,dc=example,dc=org
+changetype: add
+cn: Maintaners
+objectclass: groupOfUniqueNames
+uniqueMember: cn=maintainer,ou=Users,dc=example,dc=org
+uniqueMember: cn=developer,ou=Users,dc=example,dc=org
