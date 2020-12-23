@@ -1,3 +1,5 @@
+[![Build Status](https://github.drone.protegear.io/api/badges/ulrichSchreiner/doorman/status.svg)](https://github.drone.protegear.io/ulrichSchreiner/doorman)
+
 # Doorman
 
 `doorman` is a reverse proxy to protect your internet ressources from beeing accessed.
