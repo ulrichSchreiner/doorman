@@ -1,0 +1,30 @@
+---
+kind: pipeline
+type: docker
+name: default
+
+steps:
+- name: build
+  image: registry.gitlab.com/ulrichschreiner/go-web-dev
+  commands:
+    - echo "latest,g$(git rev-parse --short=8 HEAD)" >.tags
+    - make doorman
+
+- name: frontend
+  image: registry.gitlab.com/ulrichschreiner/go-web-dev
+  commands:
+    - make build-frontend
+
+- name: publish
+  image: plugins/docker
+  settings:
+    dockerfile: Dockerfile
+    repo: quay.io/ulrichschreiner/doorman
+    registry: quay.io
+    username:
+      from_secret: quay_username
+    password:
+      from_secret: quay_password
+  depends_on:
+    - build
+    - frontend

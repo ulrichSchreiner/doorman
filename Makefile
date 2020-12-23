@@ -32,6 +32,10 @@ dev-frontend:
 	cd webapp && npm i && npm run dev
 
 .PHONY:
+build-frontend:
+	cd webapp && npm i && npm run build
+
+.PHONY:
 dev-%: %
 	+$(call compile_and_run_target,$<)
 
