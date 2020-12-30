@@ -1,3 +1,4 @@
+.oneshell:
 WEBAPPS := $(dir $(wildcard **/*/webapp/package.json))
 BINARY := doorman
 
@@ -48,6 +49,9 @@ $(BINARY):
 localrun-%: %
 	bin/$< run --config test/caddy.json
 
+.PHONY:
+docker-image:
+	docker build -t  quay.io/ulrichschreiner/doorman .
 .PHONY:
 second-instance:
 	sed 's/:2015/:22015/g' test/caddy.json >/tmp/caddy.json
