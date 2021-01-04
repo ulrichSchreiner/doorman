@@ -72,7 +72,7 @@ func (op *operationMode) isLink() bool {
 
 func init() {
 	caddy.RegisterModule(Middleware{})
-	httpcaddyfile.RegisterHandlerDirective("twofactor", parseCaddyfile)
+	httpcaddyfile.RegisterHandlerDirective("doorman", parseCaddyfile)
 }
 
 type Duration time.Duration
@@ -173,7 +173,7 @@ type Middleware struct {
 // CaddyModule returns the Caddy module information.
 func (Middleware) CaddyModule() caddy.ModuleInfo {
 	return caddy.ModuleInfo{
-		ID:  "http.handlers.twofactor",
+		ID:  "http.handlers.doorman",
 		New: func() caddy.Module { return new(Middleware) },
 	}
 }

@@ -20,7 +20,7 @@
                         {
                             "handle": [
                                 {
-                                    "handler": "twofactor",
+                                    "handler": "doorman",
                                     "imprint_url": "http://www.example.com/imprint",
                                     "privacy_policy_url": "http://www.example.com/privacy",
                                     "spacing": "",
