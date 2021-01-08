@@ -230,6 +230,7 @@ func (sm *SMTPMsgConfig) Send(lg *zap.Logger, a addressable, subject, shortmessa
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/html", mbody)
 
+	lg.Debug("send email", zap.String("from", a.FromMail), zap.String("fromName", a.FromName), zap.String("to", a.ToMail))
 	if err := sm.dialer.DialAndSend(m); err != nil {
 		return "", fmt.Errorf("cannot send email: %w", err)
 	}
