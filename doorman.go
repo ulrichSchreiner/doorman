@@ -14,7 +14,6 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
-	"github.com/caddyserver/caddy/v2/caddyconfig/httpcaddyfile"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/go-redis/redis/v8"
 	"go.uber.org/zap"
@@ -71,8 +70,8 @@ func (op *operationMode) isLink() bool {
 }
 
 func init() {
+	caddy.RegisterModule(MiddlewareApp{})
 	caddy.RegisterModule(Middleware{})
-	httpcaddyfile.RegisterHandlerDirective("doorman", parseCaddyfile)
 }
 
 type Duration time.Duration
@@ -140,8 +139,8 @@ type StoreSettings struct {
 	} `json:"otp"`
 }
 
-// Middleware implements an HTTP handler
-type Middleware struct {
+// MiddlewareApp implements an HTTP handler
+type MiddlewareApp struct {
 	Users            Plugins         `json:"users,omitempty"`
 	Whitelist        Plugins         `json:"whitelist,omitempty"`
 	CookieHash       []byte          `json:"cookie_hash"`
@@ -164,6 +163,7 @@ type Middleware struct {
 	secCookie        *cookieHandler
 	clock            clock.Clock
 	assets           http.Handler
+	assetsDir        http.FileSystem
 	transporters     transporters
 	userbackends     *userBackends
 	whitelister      *whitelister
@@ -171,15 +171,23 @@ type Middleware struct {
 }
 
 // CaddyModule returns the Caddy module information.
-func (Middleware) CaddyModule() caddy.ModuleInfo {
+func (MiddlewareApp) CaddyModule() caddy.ModuleInfo {
 	return caddy.ModuleInfo{
-		ID:  "http.handlers.doorman",
-		New: func() caddy.Module { return new(Middleware) },
+		ID:  "doorman",
+		New: func() caddy.Module { return new(MiddlewareApp) },
 	}
 }
 
+func (m *MiddlewareApp) Start() error {
+	return nil
+}
+
+func (m *MiddlewareApp) Stop() error {
+	return nil
+}
+
 // Provision implements caddy.Provisioner.
-func (m *Middleware) Provision(ctx caddy.Context) error {
+func (m *MiddlewareApp) Provision(ctx caddy.Context) error {
 	m.logger = ctx.Logger(m)
 	m.clock = clock.New()
 	var rcli *redis.Client
@@ -208,7 +216,8 @@ func (m *Middleware) Provision(ctx caddy.Context) error {
 	}
 
 	m.secCookie = newCookie(m.logger, m.CookieHash, m.CookieBlock, m.InsecureCookie, m.Domain)
-	m.assets = http.FileServer(http.Dir("webapp/dist"))
+	m.assetsDir = http.Dir("webapp/dist")
+	m.assets = http.FileServer(m.assetsDir)
 	if m.AccessDuration == 0 {
 		m.AccessDuration = defaultAccessDuration
 	}
@@ -246,7 +255,7 @@ func (m *Middleware) Provision(ctx caddy.Context) error {
 }
 
 // Validate implements caddy.Validator.
-func (m *Middleware) Validate() error {
+func (m *MiddlewareApp) Validate() error {
 	if len(m.CookieBlock) != 32 {
 		return fmt.Errorf("the value for cookie_block must be 32 bytes, for example: %v", base64.StdEncoding.EncodeToString(newRandomKey(32)))
 	}
@@ -276,35 +285,14 @@ func (m *Middleware) Validate() error {
 	return nil
 }
 
-// ServeHTTP implements caddyhttp.MiddlewareHandler.
-func (m Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
-	clip := findClientIP(r)
-	ipallowed := m.store.isAllowed(clip)
-	if r.Host == m.authHost {
-		if ipallowed {
-			w.Header().Add("content-type", "text/html")
-			fmt.Fprintln(w, accessAllowed)
-			return nil
-		}
-		m.ServeApp(w, r, clip)
-		return nil
-	}
-	m.logger.Debug("check if access is allowed", zap.String("clientip", clip), zap.Bool("ipallowed", ipallowed))
-	if m.store.isAllowed(clip) {
-		return next.ServeHTTP(w, r)
-	}
-	m.ServeApp(w, r, clip)
-	return nil
-}
-
 // UnmarshalCaddyfile implements caddyfile.Unmarshaler.
-func (m *Middleware) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
+func (m *MiddlewareApp) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 	for d.Next() {
 	}
 	return nil
 }
 
-func (m *Middleware) searchUser(uid string) (*UserEntry, error) {
+func (m *MiddlewareApp) searchUser(uid string) (*UserEntry, error) {
 	ue, err := m.userbackends.Search(m.logger, uid)
 	if err == nil {
 		m.logger.Info("found user", zap.Any("user", ue))
@@ -312,7 +300,7 @@ func (m *Middleware) searchUser(uid string) (*UserEntry, error) {
 	return ue, err
 }
 
-func (m *Middleware) sendMessage(usr *UserEntry, subject, msg, body string) error {
+func (m *MiddlewareApp) sendMessage(usr *UserEntry, subject, msg, body string) error {
 	m.logger.Info("send message", zap.Any("transporters", m.transporters))
 	for _, c := range m.Channels {
 		t, ok := m.transporters[c]
@@ -336,15 +324,15 @@ func (m *Middleware) sendMessage(usr *UserEntry, subject, msg, body string) erro
 	return fmt.Errorf("no message transport found for channels: %v", m.Channels)
 }
 
-func (m *Middleware) createTempRegistration(log *zap.Logger, uid string) (string, error) {
+func (m *MiddlewareApp) createTempRegistration(log *zap.Logger, uid string) (string, error) {
 	return m.store.tokensrv.newTempRegistration(log, m.Issuer, uid)
 }
 
-func (m *Middleware) checkTempRegistration(log *zap.Logger, uid string) error {
+func (m *MiddlewareApp) checkTempRegistration(log *zap.Logger, uid string) error {
 	return m.store.tokensrv.checkTempRegistration(log, m.Issuer, uid)
 }
 
-func (m *Middleware) sendOTPRegistration(uid, email, mobile, regkey string) error {
+func (m *MiddlewareApp) sendOTPRegistration(uid, email, mobile, regkey string) error {
 	authlink := fmt.Sprintf("%s/#/signup/%s/%s", m.IssuerBase, url.QueryEscape(uid), url.QueryEscape(regkey))
 	m.logger.Info("send otp registration", zap.String("email", email), zap.String("link", authlink))
 	var body bytes.Buffer
@@ -374,27 +362,62 @@ func (m *Middleware) sendOTPRegistration(uid, email, mobile, regkey string) erro
 	return nil
 }
 
-func (m *Middleware) allowUserIP(clip string) {
+func (m *MiddlewareApp) allowUserIP(clip string) {
 	if err := m.store.allowUserIP(m.logger, clip, time.Duration(m.AccessDuration)); err != nil {
 		m.logger.Error("cannot allow userip", zap.Error(err))
 	}
 }
 
-func (m *Middleware) canDoOTP() bool {
+func (m *MiddlewareApp) canDoOTP() bool {
 	return m.StoreSettings.OTP.Transport != nil
 }
 
-// parseCaddyfile unmarshals tokens from h into a new Middleware.
-func parseCaddyfile(h httpcaddyfile.Helper) (caddyhttp.MiddlewareHandler, error) {
-	var m Middleware
-	err := m.UnmarshalCaddyfile(h.Dispenser)
-	return m, err
+type Middleware struct {
+	app *MiddlewareApp
+}
+
+func (Middleware) CaddyModule() caddy.ModuleInfo {
+	return caddy.ModuleInfo{
+		ID:  "http.handlers.doorman",
+		New: func() caddy.Module { return new(Middleware) },
+	}
+}
+
+// ServeHTTP implements caddyhttp.MiddlewareHandler.
+func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
+	clip := findClientIP(r)
+	ipallowed := m.app.store.isAllowed(clip)
+	if r.Host == m.app.authHost {
+		if ipallowed {
+			w.Header().Add("content-type", "text/html")
+			fmt.Fprintln(w, accessAllowed)
+			return nil
+		}
+		m.app.ServeApp(w, r, clip)
+		return nil
+	}
+	m.app.logger.Debug("check if access is allowed", zap.String("clientip", clip), zap.Bool("ipallowed", ipallowed))
+	if m.app.store.isAllowed(clip) {
+		return next.ServeHTTP(w, r)
+	}
+	m.app.ServeApp(w, r, clip)
+	return nil
+}
+
+func (m *Middleware) Provision(ctx caddy.Context) error {
+	dm, err := ctx.App("doorman")
+	if err != nil {
+		return err
+	}
+	m.app = dm.(*MiddlewareApp)
+	return nil
 }
 
 // Interface guards
 var (
-	_ caddy.Provisioner           = (*Middleware)(nil)
-	_ caddy.Validator             = (*Middleware)(nil)
+	_ caddy.Provisioner           = (*MiddlewareApp)(nil)
+	_ caddy.Validator             = (*MiddlewareApp)(nil)
 	_ caddyhttp.MiddlewareHandler = (*Middleware)(nil)
-	_ caddyfile.Unmarshaler       = (*Middleware)(nil)
+	_ caddyfile.Unmarshaler       = (*MiddlewareApp)(nil)
+	_ caddy.App                   = (*MiddlewareApp)(nil)
 )

@@ -15,6 +15,14 @@ import (
 
 var (
 	headersForClient = []string{"X-Real-IP", "X-Forwarded-For"}
+	etagHeaders      = []string{
+		"ETag",
+		"If-Modified-Since",
+		"If-Match",
+		"If-None-Match",
+		"If-Range",
+		"If-Unmodified-Since",
+	}
 )
 
 const (
@@ -138,7 +146,7 @@ type uiconfig struct {
 	DurationSecs  int    `json:"duration_secs"`
 }
 
-func (m *Middleware) ServeApp(w http.ResponseWriter, r *http.Request, clip string) {
+func (m *MiddlewareApp) ServeApp(w http.ResponseWriter, r *http.Request, clip string) {
 	pt := r.URL.Path
 
 	m.logger.Info("new request", zap.String("path", pt), zap.String("clientip", clip), zap.String("method", r.Method))
@@ -172,11 +180,24 @@ func (m *Middleware) ServeApp(w http.ResponseWriter, r *http.Request, clip strin
 		m.uisettings(w, r)
 		return
 	}
+	_, err := m.assetsDir.Open(r.URL.Path)
+	if err != nil {
+		r.URL.Path = "/index.html"
+	}
+
+	for _, v := range etagHeaders {
+		if r.Header.Get(v) != "" {
+			r.Header.Del(v)
+		}
+	}
+	w.Header().Add("Pragma", "no-cache")
+	w.Header().Add("Cache-Control", "no-cache")
+	w.Header().Add("Expires", "0")
 
 	m.assets.ServeHTTP(w, r)
 }
 
-func (m *Middleware) uisettings(w http.ResponseWriter, r *http.Request) {
+func (m *MiddlewareApp) uisettings(w http.ResponseWriter, r *http.Request) {
 	ucfg := uiconfig{
 		Imprint:       m.ImprintURL,
 		PrivacyPolicy: m.PrivacyPolicyURL,
@@ -190,7 +211,7 @@ func (m *Middleware) uisettings(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (m *Middleware) sendToken(ue *UserEntry, w http.ResponseWriter, r *http.Request) (int64, string, int) {
+func (m *MiddlewareApp) sendToken(ue *UserEntry, w http.ResponseWriter, r *http.Request) (int64, string, int) {
 	msg := ""
 	rc := http.StatusOK
 	created := m.clock.Now().UTC().Unix()
@@ -217,7 +238,7 @@ func (m *Middleware) sendToken(ue *UserEntry, w http.ResponseWriter, r *http.Req
 	return created, msg, rc
 }
 
-func (m *Middleware) sendYesNoLink(ue *UserEntry, w http.ResponseWriter, r *http.Request) (string, string, int) {
+func (m *MiddlewareApp) sendYesNoLink(ue *UserEntry, w http.ResponseWriter, r *http.Request) (string, string, int) {
 	msg := ""
 	rc := http.StatusOK
 	key := randomKey(8)
@@ -238,7 +259,7 @@ func (m *Middleware) sendYesNoLink(ue *UserEntry, w http.ResponseWriter, r *http
 	return key, msg, rc
 }
 
-func (m *Middleware) validateTempRegister(w http.ResponseWriter, r *http.Request) (rs result, rc int) {
+func (m *MiddlewareApp) validateTempRegister(w http.ResponseWriter, r *http.Request) (rs result, rc int) {
 	if err := r.ParseMultipartForm(1024); err != nil {
 		m.logger.Error("cannot parse form", zap.Error(err))
 		rc = http.StatusInternalServerError
@@ -254,7 +275,7 @@ func (m *Middleware) validateTempRegister(w http.ResponseWriter, r *http.Request
 	return
 }
 
-func (m *Middleware) fetchTempRegister(w http.ResponseWriter, r *http.Request) (rs result, rc int) {
+func (m *MiddlewareApp) fetchTempRegister(w http.ResponseWriter, r *http.Request) (rs result, rc int) {
 	if err := r.ParseMultipartForm(1024); err != nil {
 		m.logger.Error("cannot parse form", zap.Error(err))
 		rc = http.StatusInternalServerError
@@ -275,7 +296,7 @@ func (m *Middleware) fetchTempRegister(w http.ResponseWriter, r *http.Request) (
 	return
 }
 
-func (m *Middleware) register(w http.ResponseWriter, r *http.Request) (rs result, rc int) {
+func (m *MiddlewareApp) register(w http.ResponseWriter, r *http.Request) (rs result, rc int) {
 	data, err := m.secCookie.get(r)
 	if err != nil {
 		m.logger.Error("cannot parse cookie", zap.Error(err))
@@ -317,7 +338,7 @@ func (m *Middleware) register(w http.ResponseWriter, r *http.Request) (rs result
 	return
 }
 
-func (m *Middleware) allowSignin(w http.ResponseWriter, r *http.Request) {
+func (m *MiddlewareApp) allowSignin(w http.ResponseWriter, r *http.Request) {
 	_ = r.ParseForm()
 	tok := r.FormValue("t")
 	allow := r.FormValue("a")
@@ -337,7 +358,7 @@ func (m *Middleware) allowSignin(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, signinAcceptedHTML)
 }
 
-func (m *Middleware) waitFor(w http.ResponseWriter, r *http.Request) (rs result, rc int) {
+func (m *MiddlewareApp) waitFor(w http.ResponseWriter, r *http.Request) (rs result, rc int) {
 	ip := findClientIP(r)
 	if err := r.ParseMultipartForm(1024); err != nil {
 		m.logger.Error("cannot parse form", zap.Error(err))
@@ -377,7 +398,7 @@ func (m *Middleware) waitFor(w http.ResponseWriter, r *http.Request) (rs result,
 	return
 }
 
-func (m *Middleware) sendUser(w http.ResponseWriter, r *http.Request) (rs result, rc int) {
+func (m *MiddlewareApp) sendUser(w http.ResponseWriter, r *http.Request) (rs result, rc int) {
 	if err := r.ParseMultipartForm(1024); err != nil {
 		m.logger.Error("cannot parse form", zap.Error(err))
 		rc = http.StatusInternalServerError
@@ -436,7 +457,7 @@ func (m *Middleware) sendUser(w http.ResponseWriter, r *http.Request) (rs result
 	return
 }
 
-func (m *Middleware) checkOTP(w http.ResponseWriter, r *http.Request) (rs result, rc int) {
+func (m *MiddlewareApp) checkOTP(w http.ResponseWriter, r *http.Request) (rs result, rc int) {
 	if err := r.ParseMultipartForm(1024); err != nil {
 		m.logger.Error("cannot parse form", zap.Error(err))
 		rc = http.StatusInternalServerError
@@ -471,7 +492,7 @@ func (m *Middleware) checkOTP(w http.ResponseWriter, r *http.Request) (rs result
 	return
 }
 
-func (m *Middleware) checkToken(w http.ResponseWriter, r *http.Request) (rs result, rc int) {
+func (m *MiddlewareApp) checkToken(w http.ResponseWriter, r *http.Request) (rs result, rc int) {
 	if err := r.ParseMultipartForm(1024); err != nil {
 		m.logger.Error("cannot parse form", zap.Error(err))
 		rc = http.StatusInternalServerError
