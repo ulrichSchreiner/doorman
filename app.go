@@ -215,7 +215,7 @@ func (m *MiddlewareApp) sendToken(ue *UserEntry, w http.ResponseWriter, r *http.
 	msg := ""
 	rc := http.StatusOK
 	created := m.clock.Now().UTC().Unix()
-	created_ts, err := m.store.tokensrv.checkTempToken(m.logger, m.Issuer, ue.UID)
+	createdTS, err := m.store.tokensrv.checkTempToken(m.logger, m.Issuer, ue.UID)
 	if err != nil {
 		// only create/send a token when we dont have one pending
 		token := randToken(6)
@@ -232,7 +232,7 @@ func (m *MiddlewareApp) sendToken(ue *UserEntry, w http.ResponseWriter, r *http.
 		}
 		_ = m.store.tokensrv.newTempToken(m.logger, m.Issuer, ue.UID, fmt.Sprintf("%d", created), time.Duration(m.TokenDuration))
 	} else {
-		_, _ = fmt.Sscanf(created_ts, "%d", &created)
+		_, _ = fmt.Sscanf(createdTS, "%d", &created)
 		m.logger.Info("token already sent", zap.String("uid", ue.UID))
 	}
 	return created, msg, rc

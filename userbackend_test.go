@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func generate_test_script(t *testing.T, content string) string {
+func generateTestScript(t *testing.T, content string) string {
 	tmpfile, err := ioutil.TempFile("", "script")
 	if err != nil {
 		t.Fatal(err)
@@ -84,7 +84,7 @@ func Test_userSearchCommand_Search(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cmd := generate_test_script(t, tt.fields.Content)
+			cmd := generateTestScript(t, tt.fields.Content)
 			defer os.Remove(cmd)
 			usc := &userSearchCommand{
 				Command:  cmd,
@@ -105,19 +105,19 @@ func Test_userSearchCommand_Search(t *testing.T) {
 
 func Test_userlistBackend_Search(t *testing.T) {
 	userlist := []UserEntry{
-		UserEntry{
+		{
 			Name:   "Donald Duck",
 			UID:    "ddk",
 			Mobile: "123123123",
 			EMail:  "dd@donald.duck",
 		},
-		UserEntry{
+		{
 			Name:   "Daisy Duck",
 			UID:    "dsdk",
 			Mobile: "123123123",
 			EMail:  "dsdk@daisy.duck",
 		},
-		UserEntry{
+		{
 			Name:   "Dagobert Duck",
 			UID:    "dgdk",
 			Mobile: "123123123",
