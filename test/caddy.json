@@ -74,10 +74,10 @@
             "cookie_hash": "tga7Y9FC/4R8lm6abiPZCbqOYS4Pz4H4ql6AoIx6yMMmLSZhrS4ZihiLKlTl5Bcjx8fBkuWE4FDkvdISeVEjNQ==",
             "insecure_cookie": true,
             "channels": [
+                "clipboard",
                 "standard-smtp",
                 "smsgateway",
                 "local url tester",
-                "clipboard",
                 "mailgun"
             ],
             "messenger_config": {
