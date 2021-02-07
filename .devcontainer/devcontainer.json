@@ -1,1 +1,18 @@
-/home/usc/Nextcloud/vscode-workspaces/twofacaddy/devcontainer.json
+{
+    "name": "doorman",
+    "dockerComposeFile": [
+        "${env:HOME}/.config/vscode/go-compose.yml"
+    ],
+    "workspaceFolder": "${localWorkspaceFolder}",
+    "service": "go-dev-tools",
+    "extensions": [
+        "golang.go",
+        "humao.rest-client",
+        "dline.cobaltnext",
+        "sirtori.indenticator",
+        "wayou.vscode-todo-highlight",
+        "gruntfuggly.todo-tree",
+        "eamodio.gitlens",
+        "compulim.vscode-clock"
+    ]
+}
