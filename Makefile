@@ -63,12 +63,12 @@ testldap:
 	@docker run -it --rm -p 6389:389 -p 6636:636 --name doorman-testldap doorman-testldap
 
 .PHONY:
-redis-ephemeral:
-	docker run -it --rm -p 16379:6379 --name doorman-redis redis
+keydb-ephemeral:
+	docker run -it --rm -p 16379:6379 --name doorman-keydb eqalpha/keydb
 
 .PHONY:
 redis-cli:
-	docker exec -it doorman-redis redis-cli
+	docker exec -it doorman-keydb redis-cli
 
 .PHONY:
 install-devtools-arch:

@@ -10,4 +10,4 @@ windows:
       - shell_command:
         - make testldap
       - shell_command:
-        - make redis-ephemeral
+        - make keydb-ephemeral
