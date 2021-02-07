@@ -66,6 +66,10 @@ func (otps *tokenservice) checkTempToken(log *zap.Logger, issuer, uid string) (s
 	return otps.store.GetTTL(log, genKey(toplevelTmpToken, uid, issuer))
 }
 
+func (otps *tokenservice) removeTempToken(log *zap.Logger, issuer, uid string) {
+	otps.store.Del(log, genKey(toplevelTmpToken, uid, issuer))
+}
+
 func (otps *tokenservice) newTempToken(log *zap.Logger, issuer, uid, val string, dur time.Duration) error {
 	return otps.store.PutTTL(log, genKey(toplevelTmpToken, uid, issuer), val, dur)
 }

@@ -362,10 +362,11 @@ func (m *MiddlewareApp) sendOTPRegistration(uid, email, mobile, regkey string) e
 	return nil
 }
 
-func (m *MiddlewareApp) allowUserIP(clip string) {
+func (m *MiddlewareApp) allowUserIP(issuer, userid, clip string) {
 	if err := m.store.allowUserIP(m.logger, clip, time.Duration(m.AccessDuration)); err != nil {
 		m.logger.Error("cannot allow userip", zap.Error(err))
 	}
+	m.store.tokensrv.removeTempToken(m.logger, issuer, userid)
 }
 
 func (m *MiddlewareApp) canDoOTP() bool {

@@ -391,7 +391,7 @@ func (m *MiddlewareApp) waitFor(w http.ResponseWriter, r *http.Request) (rs resu
 	} else {
 		m.logger.Info("waiting returned answer", zap.String("answer", string(*yn)))
 		if yn.Yes() {
-			m.allowUserIP(ip)
+			m.allowUserIP(m.Issuer, uid, ip)
 		}
 	}
 	rs.Reload = true
@@ -484,7 +484,7 @@ func (m *MiddlewareApp) checkOTP(w http.ResponseWriter, r *http.Request) (rs res
 			rc = http.StatusForbidden
 			return
 		}
-		m.allowUserIP(findClientIP(r))
+		m.allowUserIP(m.Issuer, uid.(string), findClientIP(r))
 	} else {
 		m.logger.Debug("no values found in cookie", zap.Error(err))
 		rs.Message = "No values found"
@@ -524,7 +524,7 @@ func (m *MiddlewareApp) checkToken(w http.ResponseWriter, r *http.Request) (rs r
 			uidField: uid,
 		})
 		m.logger.Info("allow user", zap.String(uidField, uid.(string)))
-		m.allowUserIP(findClientIP(r))
+		m.allowUserIP(m.Issuer, uid.(string), findClientIP(r))
 	} else {
 		m.logger.Debug("no values found in cookie", zap.Error(err))
 		rs.Message = "No values found"
