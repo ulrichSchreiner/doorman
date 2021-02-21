@@ -2,12 +2,15 @@ package doorman
 
 import (
 	"bytes"
+	"embed"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"net/url"
+	"os"
 	"text/template"
 	"time"
 
@@ -48,6 +51,9 @@ h3 {
 </body>
 </html>
 `
+
+//go:embed webapp/dist/*
+var embeddedAsset embed.FS
 
 var (
 	validOpModes = map[operationMode]bool{
@@ -215,8 +221,19 @@ func (m *MiddlewareApp) Provision(ctx caddy.Context) error {
 		m.StoreSettings.OTP.Timeout = Duration(15 * time.Minute)
 	}
 
-	m.secCookie = newCookie(m.logger, m.CookieHash, m.CookieBlock, m.InsecureCookie, m.Domain)
+	// we check if there is a local directory named "webapp/dist". when developing the
+	// code, we have this directory and so we can easily change the HTML/JS code and test
+	// it.
+	if _, err := os.Stat("webapp/dist"); os.IsNotExist(err) {
+		// no local assets in directory, use embedded ones
+		sub, err := fs.Sub(embeddedAsset, "webapp/dist")
+		if err == nil {
+			m.assetsDir = http.FS(sub)
+			goto assetsInitialized
+		}
+	}
 	m.assetsDir = http.Dir("webapp/dist")
+assetsInitialized:
 	m.assets = http.FileServer(m.assetsDir)
 	if m.AccessDuration == 0 {
 		m.AccessDuration = defaultAccessDuration
