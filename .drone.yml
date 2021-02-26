@@ -9,7 +9,7 @@ steps:
   commands:
     - make build-frontend
 
-    - name: build
+- name: build
   image: registry.gitlab.com/ulrichschreiner/go-web-dev
   commands:
     - echo "latest,g$(git rev-parse --short=8 HEAD)" >.tags
