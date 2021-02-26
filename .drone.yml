@@ -4,17 +4,17 @@ type: docker
 name: default
 
 steps:
-- name: build
+- name: frontend
+  image: registry.gitlab.com/ulrichschreiner/go-web-dev
+  commands:
+    - make build-frontend
+
+    - name: build
   image: registry.gitlab.com/ulrichschreiner/go-web-dev
   commands:
     - echo "latest,g$(git rev-parse --short=8 HEAD)" >.tags
     - make doorman
     - go test -v ./...
-
-- name: frontend
-  image: registry.gitlab.com/ulrichschreiner/go-web-dev
-  commands:
-    - make build-frontend
 
 - name: publish
   image: plugins/docker
@@ -26,6 +26,3 @@ steps:
       from_secret: quay_username
     password:
       from_secret: quay_password
-  depends_on:
-    - build
-    - frontend
