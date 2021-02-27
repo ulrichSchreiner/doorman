@@ -221,6 +221,8 @@ func (m *MiddlewareApp) Provision(ctx caddy.Context) error {
 		m.StoreSettings.OTP.Timeout = Duration(15 * time.Minute)
 	}
 
+	m.secCookie = newCookie(m.logger, m.CookieHash, m.CookieBlock, m.InsecureCookie, m.Domain)
+
 	// we check if there is a local directory named "webapp/dist". when developing the
 	// code, we have this directory and so we can easily change the HTML/JS code and test
 	// it.
