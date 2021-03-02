@@ -76,12 +76,6 @@ func (cfg *ldapConfiguration) Search(log *zap.Logger, uid string) (*UserEntry, e
 	return cfg.search(log, con, uid)
 }
 
-// func (cfg *ldapConfiguration) updateConnection(c *ldap.Conn) {
-// 	cfg.Lock()
-// 	defer cfg.Unlock()
-// 	cfg.connection = c
-// }
-
 func initConnection(lg *zap.Logger, cfg *ldapConfiguration) (ldapsearcher, error) {
 	var con *ldap.Conn
 	if cfg.TLS {
