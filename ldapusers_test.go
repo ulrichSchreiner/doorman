@@ -26,9 +26,8 @@ func (dc *dummyconnection) Bind(username, password string) error {
 func (dc *dummyconnection) Close() {}
 
 func createInit(res *ldap.SearchResult, err error) configInitialize {
-	return func(_ *zap.Logger, cfg *ldapConfiguration) error {
-		cfg.connection = &dummyconnection{result: res, err: err}
-		return nil
+	return func(_ *zap.Logger, cfg *ldapConfiguration) (ldapsearcher, error) {
+		return &dummyconnection{result: res, err: err}, nil
 	}
 }
 
@@ -138,7 +137,7 @@ func Test_search(t *testing.T) {
 			if tt.returnErr {
 				reserr = fmt.Errorf("simple error")
 			}
-			initConnection = createInit(createLDAPSearchResult(tt.attributes, tt.numentries), reserr)
+			getConnection = createInit(createLDAPSearchResult(tt.attributes, tt.numentries), reserr)
 			ld := (&ldapConfiguration{}).init(caddy.NewReplacer())
 			if tt.uidattribute != "" {
 				ld.UIDAttribute = tt.uidattribute

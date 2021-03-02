@@ -41,13 +41,6 @@
                     }
                 },
                 {
-                    "type": "command",
-                    "name": "external command",
-                    "spec": {
-                        "command": "/home/usc/tmp/test.sh"
-                    }
-                },
-                {
                     "type": "ldap",
                     "name": "test ldap backend",
                     "spec": {

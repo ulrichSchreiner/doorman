@@ -13,9 +13,11 @@ import (
 )
 
 var (
-	onlynum                         = regexp.MustCompile(`[^\w]`)
-	initConnection configInitialize = onlineInitConnection
+	onlynum                        = regexp.MustCompile(`[^\w]`)
+	getConnection configInitialize = initConnection
 )
+
+type configInitialize func(*zap.Logger, *ldapConfiguration) (ldapsearcher, error)
 
 const (
 	defaultUID    = "uid"
@@ -23,8 +25,6 @@ const (
 	defaultEMail  = "mail"
 	defaultName   = "displayName"
 )
-
-type configInitialize func(*zap.Logger, *ldapConfiguration) error
 
 type ldapConfiguration struct {
 	Address         string `json:"address"`
@@ -37,7 +37,6 @@ type ldapConfiguration struct {
 	NameAttribute   string `json:"name_attribute"`
 	TLS             bool   `json:"tls"`
 	InsecureSkip    bool   `json:"insecure_skip"`
-	connection      ldapsearcher
 
 	sync.Mutex
 }
@@ -68,50 +67,49 @@ func (cfg *ldapConfiguration) init(r *caddy.Replacer) *ldapConfiguration {
 }
 
 func (cfg *ldapConfiguration) Search(log *zap.Logger, uid string) (*UserEntry, error) {
-	if err := initConnection(log, cfg); err != nil {
+	con, err := getConnection(log, cfg)
+	if err != nil {
 		return nil, err
 	}
 
-	return cfg.search(log, uid)
+	return cfg.search(log, con, uid)
 }
 
-func (cfg *ldapConfiguration) updateConnection(c *ldap.Conn) {
-	cfg.Lock()
-	defer cfg.Unlock()
-	cfg.connection = c
-}
+// func (cfg *ldapConfiguration) updateConnection(c *ldap.Conn) {
+// 	cfg.Lock()
+// 	defer cfg.Unlock()
+// 	cfg.connection = c
+// }
 
-func onlineInitConnection(lg *zap.Logger, cfg *ldapConfiguration) error {
-	if cfg.connection == nil {
-		if cfg.TLS {
-			tlsConf := &tls.Config{InsecureSkipVerify: cfg.InsecureSkip}
-			c, err := ldap.DialTLS("tcp", cfg.Address, tlsConf)
-			if err != nil {
-				lg.Error("cannot connect to TLS server", zap.Bool("insecure", cfg.InsecureSkip), zap.Error(err))
-				return fmt.Errorf("%w: cannot connect to TLS ldap server", err)
-			}
-			cfg.updateConnection(c)
-		} else {
-			c, err := ldap.Dial("tcp", cfg.Address)
-			if err != nil {
-				lg.Error("cannot connect to server", zap.Error(err))
-				return fmt.Errorf("%w: cannot connect to ldap server", err)
-			}
-			cfg.updateConnection(c)
-		}
-		// bind with a user to make queries
-		err := cfg.connection.Bind(cfg.User, cfg.Password)
+func initConnection(lg *zap.Logger, cfg *ldapConfiguration) (ldapsearcher, error) {
+	var con *ldap.Conn
+	if cfg.TLS {
+		tlsConf := &tls.Config{InsecureSkipVerify: cfg.InsecureSkip}
+		c, err := ldap.DialTLS("tcp", cfg.Address, tlsConf)
 		if err != nil {
-			lg.Error("cannot bind to server", zap.Error(err))
-			cfg.connection.Close()
-			cfg.updateConnection(nil)
-			return fmt.Errorf("%w: cannot bind to ldap server", err)
+			lg.Error("cannot connect to TLS server", zap.Bool("insecure", cfg.InsecureSkip), zap.Error(err))
+			return nil, fmt.Errorf("%w: cannot connect to TLS ldap server", err)
 		}
+		con = c
+	} else {
+		c, err := ldap.Dial("tcp", cfg.Address)
+		if err != nil {
+			lg.Error("cannot connect to server", zap.Error(err))
+			return nil, fmt.Errorf("%w: cannot connect to ldap server", err)
+		}
+		con = c
 	}
-	return nil
+	// bind with a user to make queries
+	err := con.Bind(cfg.User, cfg.Password)
+	if err != nil {
+		lg.Error("cannot bind to server", zap.Error(err))
+		con.Close()
+		return nil, fmt.Errorf("%w: cannot bind to ldap server", err)
+	}
+	return con, nil
 }
 
-func (cfg *ldapConfiguration) search(lg *zap.Logger, uid string) (*UserEntry, error) {
+func (cfg *ldapConfiguration) search(lg *zap.Logger, con ldapsearcher, uid string) (*UserEntry, error) {
 	returnattributes := []string{"dn", cfg.UIDAttribute}
 	if cfg.MobileAttribute != "" {
 		returnattributes = append(returnattributes, cfg.MobileAttribute)
@@ -122,7 +120,6 @@ func (cfg *ldapConfiguration) search(lg *zap.Logger, uid string) (*UserEntry, er
 	if cfg.NameAttribute != "" {
 		returnattributes = append(returnattributes, cfg.NameAttribute)
 	}
-	retryCount := 0
 
 	lg.Info("search user", zap.String("base", cfg.SearchBase), zap.String("uidattribute", cfg.UIDAttribute), zap.String("user", uid), zap.Strings("attributes", returnattributes))
 	// Search for the given username
@@ -133,18 +130,8 @@ func (cfg *ldapConfiguration) search(lg *zap.Logger, uid string) (*UserEntry, er
 		returnattributes,
 		nil,
 	)
-retry:
-	sr, err := cfg.connection.Search(searchRequest)
+	sr, err := con.Search(searchRequest)
 	if err != nil {
-		if ldap.IsErrorWithCode(err, ldap.ErrorNetwork) {
-			// if this is an error with the network, reset the connection and retry
-			retryCount++
-			cfg.updateConnection(nil)
-			_ = initConnection(lg, cfg)
-			if retryCount < 3 {
-				goto retry
-			}
-		}
 		lg.Error("error searching for user", zap.Error(err))
 		return nil, fmt.Errorf("%w: cannot connect to search ldap server", ErrNoConnection)
 	}
