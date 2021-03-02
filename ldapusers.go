@@ -71,6 +71,7 @@ func (cfg *ldapConfiguration) Search(log *zap.Logger, uid string) (*UserEntry, e
 	if err != nil {
 		return nil, err
 	}
+	defer con.Close()
 
 	return cfg.search(log, con, uid)
 }
