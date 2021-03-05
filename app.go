@@ -182,7 +182,7 @@ func (m *MiddlewareApp) ServeApp(w http.ResponseWriter, r *http.Request, clip st
 	}
 	_, err := m.assetsDir.Open(r.URL.Path)
 	if err != nil {
-		r.URL.Path = "/index.html"
+		r.URL.Path = "/"
 	}
 
 	for _, v := range etagHeaders {
