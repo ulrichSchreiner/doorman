@@ -36,74 +36,6 @@ const (
 	captchaField = "captcha"
 )
 
-const signinRequestHTML = `
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<style>
-* {
-  font-family: sans-serif;
-  text-align: center;
-}
-h3 {
-	margin-top: 50px;
-}
-.answer {
-  margin-top: 50px;
-}
-</style>
-<body>
-		<h3>Signin Request</h3>
-		<div>A signin request from user <b>%s</b> originated from IP <b>%s</b></div>
-		<div class="answer">Click <a href="allow?t=%s&a=yes">YES</a> to allow this request.
-</body>
-</html>
-`
-const noSigninRequestHTML = `
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<style>
-* {
-  font-family: sans-serif;
-  text-align: center;
-}
-h3 {
-	margin-top: 50px;
-}
-.answer {
-  margin-top: 50px;
-}
-</style>
-<body>
-		<h3>Signin Request</h3>
-		<div class="answer">No active request found</div>
-</body>
-</html>
-`
-
-const signinAcceptedHTML = `
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<style>
-* {
-  font-family: sans-serif;
-  text-align: center;
-}
-h3 {
-	margin-top: 50px;
-}
-</style>
-<body>
-		<h3>Signin Request accepted</h3>
-</body>
-</html>
-`
-
 func randToken(n int) string {
 	// this is for testing purposes
 	os.Getenv("DUMMYTOKEN")
@@ -259,11 +191,21 @@ func (m *MiddlewareApp) sendYesNoLink(ue *UserEntry, w http.ResponseWriter, r *h
 	m.logger.Debug("send yesno link", zap.String("key", key), zap.String(uidField, ue.UID))
 	link := fmt.Sprintf("%s/allow?t=%s", m.IssuerBase, url.QueryEscape(key))
 
-	body := fmt.Sprintf(`A login request was triggered. Click <a href="%s">to allow</a>. After %s the request will be automatically denied`, link, time.Duration(m.TokenDuration).String())
-
-	if err := m.sendMessage(ue, "Your login request", "Signin: "+link, body); err != nil {
-		msg = fmt.Sprintf("Cannot send message: %s", err.Error())
+	var buf bytes.Buffer
+	if err := emailLinkNotification.Execute(&buf, map[string]string{
+		"Loginlink":     link,
+		"Timeout":       time.Duration(m.TokenDuration).String(),
+		"Sent":          time.Now().UTC().Format(time.RFC3339),
+		"Imprint":       m.ImprintURL,
+		"PrivacyPolicy": m.PrivacyPolicyURL,
+	}); err != nil {
+		msg = fmt.Sprintf("Cannot render mail template: %s", err.Error())
 		rc = http.StatusInternalServerError
+	} else {
+		if err := m.sendMessage(ue, "Your login request", "Signin: "+link, buf.String()); err != nil {
+			msg = fmt.Sprintf("Cannot send message: %s", err.Error())
+			rc = http.StatusInternalServerError
+		}
 	}
 	return key, msg, rc
 }

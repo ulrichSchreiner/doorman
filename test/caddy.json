@@ -14,10 +14,10 @@
             "imprint_url": "http://www.example.com/imprint",
             "privacy_policy_url": "http://www.example.com/privacy",
             "spacing": "",
-            "operation_mode": "token",
-            "captcha_mode": "full",
+            "operation_mode": "link",
+            "captcha_mode": "math",
             "issuer": "Doorman",
-            "issuer_base": "https://46fecbdf0fea.ngrok.io",
+            "issuer_base": "https://630da082154a.ngrok.io",
             "token_duration": "60s",
             "access_duration": "60s",
             "users": [
