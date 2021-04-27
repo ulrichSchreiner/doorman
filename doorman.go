@@ -23,6 +23,7 @@ import (
 )
 
 type operationMode string
+type captchaMode string
 
 const (
 	defaultTokenDuration  = Duration(1 * time.Minute)
@@ -30,6 +31,10 @@ const (
 	operationsModeToken   = operationMode("token")
 	operationsModeOTP     = operationMode("otp")
 	operationsModeLink    = operationMode("link")
+
+	captchaNone = captchaMode("")
+	captchaMath = captchaMode("math")
+	captchaFull = captchaMode("full")
 )
 
 const accessAllowed = `
@@ -157,6 +162,7 @@ type MiddlewareApp struct {
 	IssuerBase       string          `json:"issuer_base"`
 	Spacing          string          `json:"spacing,omitempty"`
 	OperationMode    operationMode   `json:"operation_mode"`
+	CaptchaMode      captchaMode     `json:"captcha_mode"`
 	Channels         []string        `json:"channels"`
 	AccessDuration   Duration        `json:"access_duration"`
 	TokenDuration    Duration        `json:"token_duration"`

@@ -10,9 +10,10 @@ export class RemoteApi {
         this.base = base;
     }
 
-    async sendUser(uid) {
+    async sendUser(uid, captcha) {
         let fd = new FormData();
         fd.append("uid", uid);
+        fd.append("captcha", captcha);
 
         return fetch(this.base + "/sendUser", {
             method: 'POST',
@@ -43,6 +44,14 @@ export class RemoteApi {
             body: fd,
         }).then(handleResponse);
     }
+
+    async createCaptcha() {
+        return fetch(this.base + "/createCaptcha", {
+            method: 'POST',
+            cache: 'no-cache'
+        }).then(handleResponse);
+    }
+
     async validateTempRegister(uid, key, token) {
         let fd = new FormData();
         fd.append("uid", uid);

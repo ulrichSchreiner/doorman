@@ -15,6 +15,7 @@
             "privacy_policy_url": "http://www.example.com/privacy",
             "spacing": "",
             "operation_mode": "token",
+            "captcha_mode": "full",
             "issuer": "Doorman",
             "issuer_base": "https://46fecbdf0fea.ngrok.io",
             "token_duration": "60s",

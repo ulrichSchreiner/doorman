@@ -45,7 +45,6 @@ export const Signup = (props) => {
     React.useEffect(async () => {
         try {
             let d = await remoteAPI.fetchTempRegister(decodeURIComponent(uid), decodeURIComponent(regtoken));
-            console.log("data: ", d);
             setImgData(d.data.image);
             setMessage(null);
         } catch (err) {

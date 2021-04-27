@@ -11,6 +11,7 @@ require (
 	github.com/gorilla/securecookie v1.1.1
 	github.com/mailgun/groupcache/v2 v2.2.1
 	github.com/pquerna/otp v1.3.0
+	github.com/steambap/captcha v1.3.1
 	go.uber.org/zap v1.16.0
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect

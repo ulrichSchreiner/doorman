@@ -7,6 +7,7 @@ import Lock from '@material-ui/icons/Lock';
 import Alert from '@material-ui/lab/Alert';
 import { default as React } from 'react';
 import { Route, Switch, useHistory } from "react-router-dom";
+import { Captcha } from './Captcha';
 import { OTPEnter } from './OTPEnter';
 import { RegisterUser } from './RegisterUser';
 import { RemoteApi } from './RemoteApi';
@@ -80,6 +81,8 @@ export const App = (props) => {
     const theme = useTheme();
     const history = useHistory();
     const [uid, setUid] = React.useState("");
+    const [solution, setSolution] = React.useState("");
+    const [imgdata, setImgData] = React.useState(null);
     const [opmode, setOPMode] = React.useState("");
     const [token, setToken] = React.useState("");
     const [tokenCreated, setTokenCreated] = React.useState(new Date());
@@ -90,6 +93,7 @@ export const App = (props) => {
     const [serverMessage, setServerMessage] = React.useState("");
     const [showError, setShowError] = React.useState(false);
     const [passthrough, setPassthrough] = React.useState(null);
+    const [captchaMode, setCaptchaMode] = React.useState("");
 
     React.useEffect(() => {
         remoteAPI.uisettings().then(s => {
@@ -97,6 +101,7 @@ export const App = (props) => {
             setPrivacyURL(s.privacy_policy);
             setOPMode(s.operation_mode);
             setWaitSecs(s.duration_secs);
+            setCaptchaMode(s.captcha_mode);
         })
     }, []);
 
@@ -114,6 +119,7 @@ export const App = (props) => {
             await cb();
         }
         catch (e) {
+            if (e?.data?.captcha) setImgData(e.data.captcha)
             if (e.message) {
                 setServerMessage(e.message);
                 setShowError(true);
@@ -125,8 +131,8 @@ export const App = (props) => {
         }
     };
 
-    const userEntered = handleRemoteError(async () => {
-        let u = await remoteAPI.sendUser(uid);
+    const sendUserSolution = async (uid, solution) => {
+        let u = await remoteAPI.sendUser(uid, solution);
         if (u.reload) {
             location.reload();
             return
@@ -146,6 +152,20 @@ export const App = (props) => {
                 history.push("/waitForPermission");
                 return
         }
+    }
+
+    const userEntered = handleRemoteError(async () => {
+        if (captchaMode != "") {
+            let d = await remoteAPI.createCaptcha();
+            setImgData(d.data.captcha);
+            history.push("/captcha");
+        } else {
+            await sendUserSolution(uid, solution);
+        }
+    });
+
+    const solutionEntered = handleRemoteError(async () => {
+        await sendUserSolution(uid, solution);
     });
 
     const checkToken = handleRemoteError(async () => {
@@ -161,9 +181,8 @@ export const App = (props) => {
         window.location.reload();
     });
 
-    const userChanged = (u) => {
-        setUid(u);
-    }
+    const userChanged = (u) => setUid(u);
+    const solutionChanged = (s) => setSolution(s);
 
     const doRegister = handleRemoteError(async () => {
         await remoteAPI.register(uid);
@@ -238,6 +257,21 @@ export const App = (props) => {
             title: "Wait",
             valid: () => uid != "",
             submit: () => { },
+        },
+        {
+            path: "/captcha",
+            exact: true,
+            component: <Captcha
+                mode={captchaMode}
+                value={solution}
+                imgdata={imgdata}
+                onSolutionChange={solutionChanged}
+                onSolution={solutionEntered}
+            />,
+            title: "I'm not a robot",
+            nextLabel: "Next",
+            valid: () => solution != "",
+            submit: solutionEntered,
         },
         {
             path: "/",

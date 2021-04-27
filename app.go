@@ -1,6 +1,8 @@
 package doorman
 
 import (
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -10,6 +12,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/steambap/captcha"
 	"go.uber.org/zap"
 )
 
@@ -26,10 +29,11 @@ var (
 )
 
 const (
-	numberBytes = "0123456789"
-	uidField    = "uid"
-	mailField   = "email"
-	tokenField  = "token"
+	numberBytes  = "0123456789"
+	uidField     = "uid"
+	mailField    = "email"
+	tokenField   = "token"
+	captchaField = "captcha"
 )
 
 const signinRequestHTML = `
@@ -143,6 +147,7 @@ type uiconfig struct {
 	Imprint       string `json:"imprint"`
 	PrivacyPolicy string `json:"privacy_policy"`
 	OperationMode string `json:"operation_mode"`
+	CaptchaMode   string `json:"captcha_mode"`
 	DurationSecs  int    `json:"duration_secs"`
 }
 
@@ -154,6 +159,9 @@ func (m *MiddlewareApp) ServeApp(w http.ResponseWriter, r *http.Request, clip st
 	switch pt {
 	case "/sendUser":
 		appFunc(m.logger, w, r, m.sendUser)
+		return
+	case "/createCaptcha":
+		appFunc(m.logger, w, r, m.createCaptcha)
 		return
 	case "/waitFor":
 		appFunc(m.logger, w, r, m.waitFor)
@@ -202,6 +210,7 @@ func (m *MiddlewareApp) uisettings(w http.ResponseWriter, r *http.Request) {
 		Imprint:       m.ImprintURL,
 		PrivacyPolicy: m.PrivacyPolicyURL,
 		OperationMode: string(m.OperationMode),
+		CaptchaMode:   string(m.CaptchaMode),
 		DurationSecs:  int(time.Duration(m.TokenDuration) / time.Second),
 	}
 	w.Header().Add("content-type", "application/json")
@@ -398,6 +407,47 @@ func (m *MiddlewareApp) waitFor(w http.ResponseWriter, r *http.Request) (rs resu
 	return
 }
 
+func (m *MiddlewareApp) createCaptchaRaw() (string, string, error) {
+	var capdata *captcha.Data
+	var err error
+	switch m.CaptchaMode {
+	case captchaFull:
+		capdata, err = captcha.New(250, 50)
+	case captchaMath:
+		capdata, err = captcha.NewMathExpr(250, 50)
+	case captchaNone:
+		return "", "", fmt.Errorf("no captcha mode configured")
+
+	}
+	if err != nil {
+		return "", "", err
+	}
+
+	var buf bytes.Buffer
+	if err := capdata.WriteImage(&buf); err != nil {
+		return "", "", fmt.Errorf("cannot write captcha to buffer: %w", err)
+	}
+	return base64.StdEncoding.EncodeToString(buf.Bytes()), capdata.Text, nil
+}
+
+func (m *MiddlewareApp) createCaptcha(w http.ResponseWriter, r *http.Request) (rs result, rc int) {
+	capval, captext, err := m.createCaptchaRaw()
+
+	if err != nil {
+		m.logger.Error("captcha creation error", zap.Error(err))
+		rs.Message = "Captcha error"
+		rc = http.StatusInternalServerError
+		return
+	}
+	m.secCookie.set(w, cookieData{
+		captchaField: captext,
+	})
+	rs.Data = map[string]string{
+		captchaField: capval,
+	}
+	return
+}
+
 func (m *MiddlewareApp) sendUser(w http.ResponseWriter, r *http.Request) (rs result, rc int) {
 	if err := r.ParseMultipartForm(1024); err != nil {
 		m.logger.Error("cannot parse form", zap.Error(err))
@@ -406,12 +456,49 @@ func (m *MiddlewareApp) sendUser(w http.ResponseWriter, r *http.Request) (rs res
 	}
 
 	uid := r.FormValue(uidField)
+	cap := r.FormValue(captchaField)
+	if m.CaptchaMode != captchaNone {
+		data, err := m.secCookie.get(r)
+		if err != nil {
+			m.logger.Debug("no values found in cookie", zap.Error(err))
+			rs.Message = "No values found"
+			rc = http.StatusInternalServerError
+			return
+		}
+		capdata, ok := data[captchaField]
+		if !ok {
+			rs.Message = "No captcha found"
+			rc = http.StatusForbidden
+			return
+		}
+		if cap != capdata {
+			rs.Message = "Wrong captcha data"
+			rc = http.StatusForbidden
+			capval, captext, _ := m.createCaptchaRaw()
+			m.secCookie.set(w, cookieData{
+				captchaField: captext,
+			})
+			rs.Data = map[string]string{
+				captchaField: capval,
+			}
+			return
+		}
+	}
 	if uid != "" {
 		ue, err := m.searchUser(uid)
 		if err != nil {
 			m.logger.Error("cannot find user", zap.String("uid", uid), zap.Error(err))
-			rs.Message = "Unknown user"
+			rs.Message = "Unknown user: " + uid
 			rc = http.StatusForbidden
+			if m.CaptchaMode != captchaNone {
+				capval, captext, _ := m.createCaptchaRaw()
+				m.secCookie.set(w, cookieData{
+					captchaField: captext,
+				})
+				rs.Data = map[string]string{
+					captchaField: capval,
+				}
+			}
 			return
 		} else {
 			m.secCookie.set(w, cookieData{

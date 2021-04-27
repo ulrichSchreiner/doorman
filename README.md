@@ -114,6 +114,29 @@ the following content:
 When clicking "YES", the **wait dialog** disappears and the user can access the
 upstream service.
 
+## Captcha modes
+
+When using SMS as a transport it would be very annoying and expensive if someone
+uses a bot to send many messages to your users. Also email transport would be troublesome
+for many people.
+
+Doorman can display a captcha so it is harder for bots to automatically send messages to
+the configured users. You can use the two modes `math` or `full`. When configured, you
+first have to enter your userid and afterwards you have to enter the captcha.
+
+### Math mode
+
+In `math` mode, you have to provide the solution of and addition:
+
+![Math captcha](images/captcha_math.png "Math captcha").
+
+The `full` mode wants you to enter the displayed text:
+
+![Full captcha](images/captcha_full.png "Full captcha").
+
+Both modes require you to enter the correct value. If you enter a wrong value, you will be
+prompted with an error and have to enter **a new+* captcha value.
+
 ## Configuration options
 
 | Option | Value |
