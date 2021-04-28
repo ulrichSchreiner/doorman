@@ -2,14 +2,17 @@ package doorman
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"math/rand"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/steambap/captcha"
@@ -83,8 +86,23 @@ type uiconfig struct {
 	DurationSecs  int    `json:"duration_secs"`
 }
 
+type gzipResponseWriter struct {
+	io.Writer
+	http.ResponseWriter
+}
+
+func (w gzipResponseWriter) Write(b []byte) (int, error) {
+	return w.Writer.Write(b)
+}
+
 func (m *MiddlewareApp) ServeApp(w http.ResponseWriter, r *http.Request, clip string) {
 	pt := r.URL.Path
+	if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+		w.Header().Set("Content-Encoding", "gzip")
+		gz := gzip.NewWriter(w)
+		defer gz.Close()
+		w = gzipResponseWriter{Writer: gz, ResponseWriter: w}
+	}
 
 	m.logger.Info("new request", zap.String("path", pt), zap.String("clientip", clip), zap.String("method", r.Method))
 
