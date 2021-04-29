@@ -135,7 +135,7 @@ The `full` mode wants you to enter the displayed text:
 ![Full captcha](images/captcha_full.png "Full captcha").
 
 Both modes require you to enter the correct value. If you enter a wrong value, you will be
-prompted with an error and have to enter **a new+* captcha value.
+prompted with an error and have to enter **a new** captcha value.
 
 ## Configuration options
 
