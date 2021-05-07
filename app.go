@@ -37,6 +37,7 @@ const (
 	mailField    = "email"
 	tokenField   = "token"
 	captchaField = "captcha"
+	dmrequest    = "__dm_request__"
 )
 
 func randToken(n int) string {
@@ -93,6 +94,18 @@ type gzipResponseWriter struct {
 
 func (w gzipResponseWriter) Write(b []byte) (int, error) {
 	return w.Writer.Write(b)
+}
+
+func (m *MiddlewareApp) IsAppRequest(r *http.Request) bool {
+	if r.Header.Get("Content-Type") == "multipart/form-data" {
+		_ = r.ParseMultipartForm(1024 * 1024)
+	} else {
+		_ = r.ParseForm()
+	}
+	if m.authHost == r.Host {
+		return r.Form.Get(dmrequest) != ""
+	}
+	return false
 }
 
 func (m *MiddlewareApp) ServeApp(w http.ResponseWriter, r *http.Request, clip string) {
@@ -207,7 +220,7 @@ func (m *MiddlewareApp) sendYesNoLink(ue *UserEntry, w http.ResponseWriter, r *h
 	})
 	// DANGER: logging the token should only be done in DEBUG mode!
 	m.logger.Debug("send yesno link", zap.String("key", key), zap.String(uidField, ue.UID))
-	link := fmt.Sprintf("%s/allow?t=%s", m.IssuerBase, url.QueryEscape(key))
+	link := fmt.Sprintf("%s/allow?t=%s&%s=1", m.IssuerBase, url.QueryEscape(key), dmrequest)
 
 	var buf bytes.Buffer
 	if err := emailLinkNotification.Execute(&buf, map[string]string{

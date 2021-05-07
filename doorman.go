@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"text/template"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -142,11 +141,9 @@ type StoreSettings struct {
 	MemCacheMB     int          `json:"memory_cache_mb"`
 	Redis          *RedisConfig `json:"redis,omitempty"`
 	OTP            struct {
-		Timeout          Duration     `json:"timeout,omitempty"`
-		RegisterTemplate string       `json:"register_template,omitempty"`
-		Transport        *TypedPlugin `json:"transport,omitempty"`
-		registerTemplate *template.Template
-		transport        messageTransport
+		Timeout   Duration     `json:"timeout,omitempty"`
+		Transport *TypedPlugin `json:"transport,omitempty"`
+		transport messageTransport
 	} `json:"otp"`
 }
 
@@ -216,11 +213,7 @@ func (m *MiddlewareApp) Provision(ctx caddy.Context) error {
 		if err != nil {
 			return err
 		}
-		tpl, err := template.New("registerOTP").Parse(m.StoreSettings.OTP.RegisterTemplate)
-		if err != nil {
-			return fmt.Errorf("cannot parse registerOTP template: %w", err)
-		}
-		m.StoreSettings.OTP.registerTemplate = tpl
+
 		m.StoreSettings.OTP.transport = t
 	}
 	if m.StoreSettings.OTP.Timeout == 0 {
@@ -358,7 +351,7 @@ func (m *MiddlewareApp) checkTempRegistration(log *zap.Logger, uid string) error
 }
 
 func (m *MiddlewareApp) sendOTPRegistration(uid, email, mobile, regkey string) error {
-	authlink := fmt.Sprintf("%s/#/signup/%s/%s", m.IssuerBase, url.QueryEscape(uid), url.QueryEscape(regkey))
+	authlink := fmt.Sprintf("%s/#/signup/%s/%s?%s=1", m.IssuerBase, url.QueryEscape(uid), url.QueryEscape(regkey), dmrequest)
 	m.logger.Info("send otp registration", zap.String("email", email), zap.String("link", authlink))
 	var body bytes.Buffer
 	a := addressable{
@@ -367,16 +360,17 @@ func (m *MiddlewareApp) sendOTPRegistration(uid, email, mobile, regkey string) e
 		ToMail:   email,
 		ToMobile: mobile,
 	}
-	if m.StoreSettings.OTP.registerTemplate != nil {
-		data := map[string]string{
-			"link":  authlink,
-			"uid":   uid,
-			"email": email,
-		}
-		err := m.StoreSettings.OTP.registerTemplate.Execute(&body, data)
-		if err != nil {
-			return fmt.Errorf("cannot generate email with template: %w", err)
-		}
+	data := map[string]string{
+		"Registrationlink": authlink,
+		"Uid":              uid,
+		"EMail":            email,
+		"Imprint":          m.ImprintURL,
+		"PrivacyPolicy":    m.PrivacyPolicyURL,
+		"Sent":             time.Now().UTC().Format(time.RFC3339),
+	}
+	err := otpRegisterNotification.Execute(&body, data)
+	if err != nil {
+		return fmt.Errorf("cannot generate email with template: %w", err)
 	}
 	res, err := m.StoreSettings.OTP.transport.Send(m.logger, a, "Your registration", authlink, body.String())
 	if err != nil {
@@ -413,7 +407,7 @@ func (Middleware) CaddyModule() caddy.ModuleInfo {
 func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
 	clip := findClientIP(r)
 	ipallowed := m.app.store.isAllowed(clip)
-	if r.Host == m.app.authHost {
+	if m.app.IsAppRequest(r) {
 		if ipallowed {
 			w.Header().Add("content-type", "text/html")
 			fmt.Fprintln(w, accessAllowed)

@@ -145,7 +145,7 @@ prompted with an error and have to enter **a new** captcha value.
 | `privacy_policy_url`| If set, this will be rendered as a link to a privacy policy page|
 | `spacing` | when in `token` mode, the token will be intersected with this character|
 | `issuer` | The `issuer` is the name of this instance. |
-| `issuer_base`| This is a base URL with scheme and hostname which is used for the login/auth pages and is never forwarded to an upstream|
+| `issuer_base`| This is a base URL with scheme and hostname which is used for the login/auth pages. You should use a separate domain but an upstream domain is also allowed|
 | `token_duration`| The duration as a `go` duration string which indicates how long a token/link is valid, default=60s|
 | `access_duration`| The duration as a `go` duration which indicates how long one can access the upstream, default=10h |
 | `operation_mode`| Se upper description of different modes (`token`, `otp` and `link`|

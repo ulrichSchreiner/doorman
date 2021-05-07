@@ -22,7 +22,7 @@ h3 {
 <body>
 		<h3>Signin Request</h3>
 		<div>A signin request from user <b>%s</b> originated from IP <b>%s</b></div>
-		<div class="answer">Click <a href="allow?t=%s&a=yes">YES</a> to allow this request.
+		<div class="answer">Click <a href="allow?t=%s&a=yes&__dm_request__=1">YES</a> to allow this request.
 </body>
 </html>
 `
@@ -133,6 +133,70 @@ const emailLinkNotificationTmpl = `
 </html>
 `
 
+const otpSignupTemplate = `
+<html>
+<head>
+<style>
+* {
+  font-family: sans-serif;
+}
+.stack {
+  max-width: 400px;
+  margin: auto;
+}
+.root {
+  max-width: 400px;
+  min-width: 400px;
+  border-radius: 10px;
+  padding: 5px;
+  z-index: 10px;
+}
+.header {
+  padding-top:10px;
+  padding-left:120px;
+  height: 55px;
+  background-color: #0c609c;
+  color: white;
+  font-size: 1.5em;
+  border-radius: 5px;
+  margin-bottom: 10px;
+}
+.footer {
+  margin-top: 20px;
+  font-size: 0.8em;
+}
+.content {
+
+}
+
+</style>
+</head>
+<body>
+	<div class="stack">
+    	<div class="root">
+		<div class="header"><div>OTP Registration</div></div>
+		<div class="content">
+				An OTP registration for <b>{{ .Uid }} ({{ .EMail }})</b> was triggered. Click <a href="{{ .Registrationlink }}">to register</a>.
+			</div>
+            <div class="footer">
+				<div>This is an automatic email sent by a registration request. Please ignore this mail if you did not trigger the registration.</div>
+
+				{{ if ne .Imprint ""}}
+				<a href="{{ .Imprint }}">Imprint</a> &nbsp;
+				{{ end }}
+				{{ if ne .PrivacyPolicy ""}}
+				<a href="{{ .PrivacyPolicy }}">Privacy policy</a>
+				{{ end }}
+
+            	<div>Sent: {{ .Sent }}</div>
+            </div>
+      	</div>
+	</div>
+</body>
+</html>
+`
+
 var (
-	emailLinkNotification = template.Must(template.New("emaillink").Parse(emailLinkNotificationTmpl))
+	emailLinkNotification   = template.Must(template.New("emaillink").Parse(emailLinkNotificationTmpl))
+	otpRegisterNotification = template.Must(template.New("otpregister").Parse(otpSignupTemplate))
 )
