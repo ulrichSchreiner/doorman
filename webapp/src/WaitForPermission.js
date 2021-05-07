@@ -46,7 +46,7 @@ export const WaitForPermission = (props) => {
     return (
         <div className={classes.root}>
             <div className={classes.indicator}><CircularProgress /></div>
-            <div className={classes.description}>Wait for signin permission</div>
+            <div className={classes.description}>Waiting for signin permission. Check your mailbox.</div>
         </div>
     );
 }
