@@ -97,13 +97,8 @@ func (w gzipResponseWriter) Write(b []byte) (int, error) {
 }
 
 func (m *MiddlewareApp) IsAppRequest(r *http.Request) bool {
-	if r.Header.Get("Content-Type") == "multipart/form-data" {
-		_ = r.ParseMultipartForm(1024 * 1024)
-	} else {
-		_ = r.ParseForm()
-	}
 	if m.authHost == r.Host {
-		return r.Form.Get(dmrequest) != ""
+		return r.URL.Query().Get(dmrequest) != ""
 	}
 	return false
 }

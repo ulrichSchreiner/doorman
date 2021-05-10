@@ -14,7 +14,7 @@
             "imprint_url": "http://www.example.com/imprint",
             "privacy_policy_url": "http://www.example.com/privacy",
             "spacing": "",
-            "operation_mode": "link",
+            "operation_mode": "token",
             "captcha_mode": "math",
             "issuer": "Doorman",
             "issuer_base": "http://localhost:2015",
@@ -68,8 +68,8 @@
             "cookie_hash": "tga7Y9FC/4R8lm6abiPZCbqOYS4Pz4H4ql6AoIx6yMMmLSZhrS4ZihiLKlTl5Bcjx8fBkuWE4FDkvdISeVEjNQ==",
             "insecure_cookie": true,
             "channels": [
-                "standard-smtp",
                 "clipboard",
+                "standard-smtp",
                 "smsgateway",
                 "local url tester",
                 "mailgun"
@@ -178,19 +178,19 @@
                                     "transport": {
                                         "protocol": "http",
                                         "tls": {
-                                            "server_name": "github.com"
+                                            "server_name": "httpbin.org"
                                         }
                                     },
                                     "upstreams": [
                                         {
-                                            "dial": "github.com:443"
+                                            "dial": "httpbin.org:443"
                                         }
                                     ],
                                     "headers": {
                                         "request": {
-                                            "add": {
+                                            "set": {
                                                 "Host": [
-                                                    "github.com"
+                                                    "{http.reverse_proxy.upstream.hostport}"
                                                 ]
                                             }
                                         }
@@ -198,8 +198,7 @@
                                     "health_checks": {
                                         "active": {
                                             "path": "/",
-                                            "expect_status": 200,
-                                            "expect_body": "Explore"
+                                            "expect_status": 200
                                         }
                                     }
                                 },

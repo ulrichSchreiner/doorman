@@ -18,7 +18,7 @@ export class RemoteApi {
         fd.append("captcha", captcha);
         fd.append(dmrequest, 1);
 
-        return fetch(this.base + "/sendUser", {
+        return fetch(this.base + `/sendUser?${dmrequest}=1`, {
             method: 'POST',
             cache: 'no-cache',
             body: fd,
@@ -28,9 +28,8 @@ export class RemoteApi {
     async register(uid) {
         let fd = new FormData();
         fd.append("uid", uid);
-        fd.append(dmrequest, 1);
 
-        return fetch(this.base + "/register", {
+        return fetch(this.base + `/register?${dmrequest}=1`, {
             method: 'POST',
             cache: 'no-cache',
             body: fd,
@@ -41,9 +40,8 @@ export class RemoteApi {
         let fd = new FormData();
         fd.append("uid", uid);
         fd.append("key", key);
-        fd.append(dmrequest, 1);
 
-        return fetch(this.base + "/fetchTempRegister", {
+        return fetch(this.base + `/fetchTempRegister?${dmrequest}=1`, {
             method: 'POST',
             cache: 'no-cache',
             body: fd,
@@ -52,8 +50,8 @@ export class RemoteApi {
 
     async createCaptcha() {
         let fd = new FormData();
-        fd.append(dmrequest, 1);
-        return fetch(this.base + "/createCaptcha", {
+
+        return fetch(this.base + `/createCaptcha?${dmrequest}=1`, {
             method: 'POST',
             cache: 'no-cache',
             body: fd,
@@ -65,9 +63,8 @@ export class RemoteApi {
         fd.append("uid", uid);
         fd.append("key", key);
         fd.append("token", token);
-        fd.append(dmrequest, 1);
 
-        return fetch(this.base + "/validateTempRegister", {
+        return fetch(this.base + `/validateTempRegister?${dmrequest}=1`, {
             method: 'POST',
             cache: 'no-cache',
             body: fd,
@@ -77,9 +74,8 @@ export class RemoteApi {
     async checkToken(token) {
         let fd = new FormData();
         fd.append("token", token);
-        fd.append(dmrequest, 1);
 
-        return fetch(this.base + "/checkToken", {
+        return fetch(this.base + `/checkToken?${dmrequest}=1`, {
             method: 'POST',
             cache: 'no-cache',
             body: fd
@@ -89,9 +85,8 @@ export class RemoteApi {
     async checkOTP(token) {
         let fd = new FormData();
         fd.append("token", token);
-        fd.append(dmrequest, 1);
 
-        return fetch(this.base + "/checkOTP", {
+        return fetch(this.base + `/checkOTP?${dmrequest}=1`, {
             method: 'POST',
             cache: 'no-cache',
             body: fd
@@ -101,9 +96,8 @@ export class RemoteApi {
     async waitFor(token) {
         let fd = new FormData();
         fd.append("token", token);
-        fd.append(dmrequest, 1);
 
-        return fetch(this.base + "/waitFor", {
+        return fetch(this.base + `/waitFor?${dmrequest}=1`, {
             method: 'POST',
             cache: 'no-cache',
             body: fd
