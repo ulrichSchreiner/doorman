@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/benbjohnson/clock v1.1.0
-	github.com/caddyserver/caddy/v2 v2.4.0-rc.1
+	github.com/caddyserver/caddy/v2 v2.4.0
 	github.com/go-ldap/ldap v3.0.3+incompatible
 	github.com/go-mail/mail v2.3.1+incompatible
 	github.com/go-redis/redis/v8 v8.6.0

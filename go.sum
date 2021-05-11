@@ -115,6 +115,8 @@ github.com/caddyserver/caddy/v2 v2.4.0-beta.2 h1:DUaK4qtL3T0/gAm0fVVkHgcMN04r4zG
 github.com/caddyserver/caddy/v2 v2.4.0-beta.2/go.mod h1:R8rCCbfUmWSjHcQ/AS357+kPUWoMISrlo7pdO15N3tI=
 github.com/caddyserver/caddy/v2 v2.4.0-rc.1 h1:tZl6bDhlwtRwuWpebRUYpDJPhJaGyrXIMp7fmuMXwMc=
 github.com/caddyserver/caddy/v2 v2.4.0-rc.1/go.mod h1:pVJidKm47Cc5VDUrd2VQPSp/d1DzNj2mjg4FQouWEJM=
+github.com/caddyserver/caddy/v2 v2.4.0 h1:yHnnbawH2G3ZBP2mAJF4XBLnJanqhULLP/wu01Qi9Io=
+github.com/caddyserver/caddy/v2 v2.4.0/go.mod h1:pVJidKm47Cc5VDUrd2VQPSp/d1DzNj2mjg4FQouWEJM=
 github.com/caddyserver/certmagic v0.12.0 h1:1f7kxykaJkOVVpXJ8ZrC6RAO5F6+kKm9U7dBFbLNeug=
 github.com/caddyserver/certmagic v0.12.0/go.mod h1:tr26xh+9fY5dN0J6IPAlMj07qpog22PJKa7Nw7j835U=
 github.com/caddyserver/certmagic v0.12.1-0.20201215190346-201f83a06067 h1:gpjCX6/8hHRgVXxy1v2AQdoAX6XRXIA8fBUZtEpnVg0=
