@@ -50,7 +50,7 @@ func (s *persistentStore) isAllowed(clientip string) bool {
 	if !s.whs.isAllowed(s.log, clientip) {
 		return s.isIPAllowed(s.log, clientip)
 	}
-	return true
+	return false
 }
 
 func (s *persistentStore) isIPAllowed(log *zap.Logger, clientip string) bool {

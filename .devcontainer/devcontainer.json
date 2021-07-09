@@ -1,10 +1,10 @@
 {
     "name": "doorman",
     "dockerComposeFile": [
-        "${env:HOME}/.config/vscode/go-compose.yml"
+	"${env:HOME}/.config/vscode/development.yml"
     ],
     "workspaceFolder": "${localWorkspaceFolder}",
-    "service": "go-dev-tools",
+    "service": "go-development",
     "extensions": [
         "golang.go",
         "humao.rest-client",
