@@ -408,6 +408,7 @@ func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next cadd
 	clip := findClientIP(r)
 	ipallowed := m.app.store.isAllowed(clip)
 	if m.app.IsAppRequest(r) {
+		m.app.logger.Debug("app request", zap.String("clientip", clip), zap.Bool("ipallowed", ipallowed), zap.String("url", r.URL.String()))
 		if ipallowed {
 			w.Header().Add("content-type", "text/html")
 			fmt.Fprintln(w, accessAllowed)
@@ -417,7 +418,7 @@ func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next cadd
 		return nil
 	}
 	m.app.logger.Debug("check if access is allowed", zap.String("clientip", clip), zap.Bool("ipallowed", ipallowed))
-	if m.app.store.isAllowed(clip) {
+	if ipallowed {
 		return next.ServeHTTP(w, r)
 	}
 	m.app.ServeApp(w, r, clip)
