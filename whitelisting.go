@@ -73,6 +73,7 @@ func (w *Whitelist) IsAllowed(log *zap.Logger, clip string) bool {
 
 	for _, n := range w.nets {
 		if n.Contains(ip) {
+			log.Debug("ip is whitelisted", zap.String("net", n.String()), zap.String("ip", clip))
 			return true
 		}
 	}

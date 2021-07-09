@@ -276,7 +276,7 @@ func (rs *redisStore) GetTTL(log *zap.Logger, key string) (string, error) {
 	var res string
 	dest := groupcache.StringSink(&res)
 	err := rs.cache.Get(context.Background(), key, dest)
-	log.Info("get from cache", zap.String("res", res), zap.Error(err))
+	log.Info("get from cache", zap.String("key", key), zap.String("res", res), zap.Error(err))
 	if err != nil {
 		return res, err
 	}

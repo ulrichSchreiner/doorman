@@ -48,13 +48,18 @@ func newStore(log *zap.Logger, cl clock.Clock, sst StoreSettings, whs *whitelist
 
 func (s *persistentStore) isAllowed(clientip string) bool {
 	if !s.whs.isAllowed(s.log, clientip) {
+		// if no whitelisting, check if user is allowed
 		return s.isIPAllowed(s.log, clientip)
 	}
-	return false
+	s.log.Debug("ip is whitelisted", zap.String("ip", clientip))
+	// ip is whitelisted
+	return true
 }
 
 func (s *persistentStore) isIPAllowed(log *zap.Logger, clientip string) bool {
-	_, err := s.users.GetTTL(log, userKey("user", clientip))
+	key := userKey("user", clientip)
+	v, err := s.users.GetTTL(log, key)
+	s.log.Debug("ip entry", zap.String("key", key), zap.String("value", v))
 	return err == nil
 }
 
