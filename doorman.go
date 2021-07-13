@@ -409,11 +409,6 @@ func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next cadd
 	ipallowed := m.app.store.isAllowed(clip)
 	if m.app.IsAppRequest(r) {
 		m.app.logger.Debug("app request", zap.String("clientip", clip), zap.Bool("ipallowed", ipallowed), zap.String("url", r.URL.String()))
-		if ipallowed {
-			w.Header().Add("content-type", "text/html")
-			fmt.Fprintln(w, accessAllowed)
-			return nil
-		}
 		m.app.ServeApp(w, r, clip)
 		return nil
 	}
