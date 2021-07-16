@@ -28,10 +28,18 @@ var (
 )
 
 type UserEntry struct {
-	Name   string `json:"name,omitempty"`
-	UID    string `json:"uid"`
-	Mobile string `json:"mobile"`
-	EMail  string `json:"email"`
+	Name      string `json:"name,omitempty"`
+	UID       string `json:"uid"`
+	Mobile    string `json:"mobile"`
+	Telephone string `json:"telephone"`
+	EMail     string `json:"email"`
+}
+
+func (ue *UserEntry) SMSNumber() string {
+	if ue.Mobile != "" {
+		return ue.Mobile
+	}
+	return ue.Telephone
 }
 
 type userSearcher interface {

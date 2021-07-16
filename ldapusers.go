@@ -20,23 +20,25 @@ var (
 type configInitialize func(*zap.Logger, *ldapConfiguration) (ldapsearcher, error)
 
 const (
-	defaultUID    = "uid"
-	defaultMobile = "mobile"
-	defaultEMail  = "mail"
-	defaultName   = "displayName"
+	defaultUID       = "uid"
+	defaultMobile    = "mobile"
+	defaultTelephone = "telephoneNumber"
+	defaultEMail     = "mail"
+	defaultName      = "displayName"
 )
 
 type ldapConfiguration struct {
-	Address         string `json:"address"`
-	User            string `json:"user"`
-	Password        string `json:"password"`
-	SearchBase      string `json:"search_base"`
-	UIDAttribute    string `json:"uid_attributes"`
-	MobileAttribute string `json:"mobile_attribute"`
-	EMailAttribute  string `json:"email_attribute"`
-	NameAttribute   string `json:"name_attribute"`
-	TLS             bool   `json:"tls"`
-	InsecureSkip    bool   `json:"insecure_skip"`
+	Address            string `json:"address"`
+	User               string `json:"user"`
+	Password           string `json:"password"`
+	SearchBase         string `json:"search_base"`
+	UIDAttribute       string `json:"uid_attributes"`
+	MobileAttribute    string `json:"mobile_attribute"`
+	TelephoneAttribute string `json:"telephone_attribute"`
+	EMailAttribute     string `json:"email_attribute"`
+	NameAttribute      string `json:"name_attribute"`
+	TLS                bool   `json:"tls"`
+	InsecureSkip       bool   `json:"insecure_skip"`
 
 	sync.Mutex
 }
@@ -59,6 +61,7 @@ func (cfg *ldapConfiguration) init(r *caddy.Replacer) *ldapConfiguration {
 	cfg.MobileAttribute = setdefault(r.ReplaceKnown(cfg.MobileAttribute, ""), defaultMobile)
 	cfg.EMailAttribute = setdefault(r.ReplaceKnown(cfg.EMailAttribute, ""), defaultEMail)
 	cfg.NameAttribute = setdefault(r.ReplaceKnown(cfg.NameAttribute, ""), defaultName)
+	cfg.TelephoneAttribute = r.ReplaceKnown(cfg.TelephoneAttribute, "")
 	cfg.Address = r.ReplaceKnown(cfg.Address, "")
 	cfg.User = r.ReplaceKnown(cfg.User, "")
 	cfg.Password = r.ReplaceKnown(cfg.Password, "")
@@ -115,6 +118,9 @@ func (cfg *ldapConfiguration) search(lg *zap.Logger, con ldapsearcher, uid strin
 	if cfg.NameAttribute != "" {
 		returnattributes = append(returnattributes, cfg.NameAttribute)
 	}
+	if cfg.TelephoneAttribute != "" {
+		returnattributes = append(returnattributes, cfg.TelephoneAttribute)
+	}
 
 	lg.Info("search user", zap.String("base", cfg.SearchBase), zap.String("uidattribute", cfg.UIDAttribute), zap.String("user", uid), zap.Strings("attributes", returnattributes))
 	// Search for the given username
@@ -164,6 +170,12 @@ func (cfg *ldapConfiguration) search(lg *zap.Logger, con ldapsearcher, uid strin
 		if a.Name == cfg.NameAttribute {
 			s := a.Values[0]
 			found.Name = s
+		}
+		if a.Name == cfg.TelephoneAttribute {
+			s := a.Values[0]
+			s = strings.ReplaceAll(s, "+", "00")
+			s = onlynum.ReplaceAllString(s, "")
+			found.Telephone = s
 		}
 	}
 

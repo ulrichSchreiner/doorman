@@ -25,6 +25,7 @@ sn: Developer
 displayname: Developer User
 mail: developer@example.org
 mobile: +49 172 1234568
+telephoneNumber: +49 123123123
 userpassword: developer_pass
 
 dn: cn=maintainer,ou=Users,dc=example,dc=org

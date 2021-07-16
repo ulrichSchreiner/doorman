@@ -36,26 +36,6 @@ const (
 	captchaFull = captchaMode("full")
 )
 
-const accessAllowed = `
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<style>
-* {
-  font-family: sans-serif;
-  text-align: center;
-}
-h3 {
-	margin-top: 50px;
-}
-</style>
-<body>
-		<h3>Access allowed</h3>
-</body>
-</html>
-`
-
 //go:embed webapp/dist/*
 var embeddedAsset embed.FS
 
@@ -329,7 +309,7 @@ func (m *MiddlewareApp) sendMessage(usr *UserEntry, subject, msg, body string) e
 			FromMail: m.Messenger.From.EMail,
 			FromName: m.Messenger.From.Name,
 			ToMail:   usr.EMail,
-			ToMobile: usr.Mobile,
+			ToMobile: usr.SMSNumber(),
 		}
 		res, err := t.Send(m.logger, a, subject, msg, body)
 		if err != nil {

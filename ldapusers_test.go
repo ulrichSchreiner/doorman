@@ -74,42 +74,58 @@ func createLDAPSearchResult(m map[string]string, num int) *ldap.SearchResult {
 
 func Test_search(t *testing.T) {
 	tests := []struct {
-		name            string
-		attributes      map[string]string
-		uid             string
-		username        string
-		mobile          string
-		mail            string
-		uidattribute    string
-		mobileattribute string
-		nameattribute   string
-		mailattribute   string
-		numentries      int
-		wantErr         bool
-		wantNoUserErr   bool
-		returnErr       bool
+		name               string
+		attributes         map[string]string
+		uid                string
+		username           string
+		mobile             string
+		mail               string
+		telephone          string
+		uidattribute       string
+		mobileattribute    string
+		telephoneattribute string
+		nameattribute      string
+		mailattribute      string
+		numentries         int
+		wantErr            bool
+		wantNoUserErr      bool
+		returnErr          bool
 	}{
 		{
-			name:       "search for user with all attributes",
-			attributes: map[string]string{defaultUID: "test", defaultEMail: "my@mail.com", defaultMobile: "123123", defaultName: "test user"},
+			name:       "search for user with all attributes except telephone",
+			attributes: map[string]string{defaultUID: "test", defaultEMail: "my@mail.com", defaultMobile: "123123", defaultName: "test user", defaultTelephone: "0123"},
 			uid:        "test",
 			mobile:     "123123",
 			mail:       "my@mail.com",
 			username:   "test user",
+			telephone:  "",
 			numentries: 1,
 		},
 		{
-			name:            "remapped user attributes",
-			attributes:      map[string]string{"myuid": "test", "mymail": "my@mail.com", "mymobile": "123123", "myname": "test user"},
-			uid:             "test",
-			mobile:          "123123",
-			mail:            "my@mail.com",
-			username:        "test user",
-			uidattribute:    "myuid",
-			mobileattribute: "mymobile",
-			nameattribute:   "myname",
-			mailattribute:   "mymail",
-			numentries:      1,
+			name:               "search for user with all attributes including telephone",
+			attributes:         map[string]string{defaultUID: "test", defaultEMail: "my@mail.com", defaultMobile: "123123", defaultName: "test user", defaultTelephone: "0123"},
+			uid:                "test",
+			mobile:             "123123",
+			mail:               "my@mail.com",
+			username:           "test user",
+			telephone:          "0123",
+			numentries:         1,
+			telephoneattribute: defaultTelephone,
+		},
+		{
+			name:               "remapped user attributes",
+			attributes:         map[string]string{"myuid": "test", "mymail": "my@mail.com", "mymobile": "123123", "myname": "test user", "myphone": "0123"},
+			uid:                "test",
+			mobile:             "123123",
+			telephone:          "0123",
+			mail:               "my@mail.com",
+			username:           "test user",
+			uidattribute:       "myuid",
+			mobileattribute:    "mymobile",
+			nameattribute:      "myname",
+			mailattribute:      "mymail",
+			telephoneattribute: "myphone",
+			numentries:         1,
 		},
 		{
 			name:          "search with empty results",
@@ -151,6 +167,9 @@ func Test_search(t *testing.T) {
 			if tt.mailattribute != "" {
 				ld.EMailAttribute = tt.mailattribute
 			}
+			if tt.telephoneattribute != "" {
+				ld.TelephoneAttribute = tt.telephoneattribute
+			}
 			ue, err := ld.Search(zap.NewNop(), tt.uid)
 			if err != nil {
 				if errors.Is(err, ErrNoUser) != tt.wantNoUserErr {
@@ -168,6 +187,9 @@ func Test_search(t *testing.T) {
 					}
 					if ue.Mobile != tt.mobile {
 						t.Errorf("got mobile %q, but wanted: %q", ue.Mobile, tt.mobile)
+					}
+					if ue.Telephone != tt.telephone {
+						t.Errorf("got telephone %q, but wanted: %q", ue.Telephone, tt.telephone)
 					}
 					if ue.EMail != tt.mail {
 						t.Errorf("got mail %q, but wanted: %q", ue.EMail, tt.mail)

@@ -50,7 +50,8 @@
                         "user": "cn=admin,dc=example,dc=org",
                         "password": "test1234",
                         "tls": false,
-                        "insecure_skip": true
+                        "insecure_skip": true,
+                        "telephone_attribute": "telephoneNumber"
                     }
                 }
             ],
