@@ -132,6 +132,7 @@ export const App = (props) => {
     };
 
     const sendUserSolution = async (uid, solution) => {
+        setSolution(""); // clear the solution in the UI
         let u = await remoteAPI.sendUser(uid, solution);
         if (u.reload) {
             location.reload();
