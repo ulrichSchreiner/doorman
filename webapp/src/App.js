@@ -105,6 +105,11 @@ export const App = (props) => {
         })
     }, []);
 
+    const reloadWindow = () => {
+        window.history.replaceState(null, null, window.location.pathname + window.location.search)
+        window.location.reload();
+    }
+
     const handleCloseError = (event, reason) => {
         if (reason === 'clickaway') {
             // show errors a few seconds until they are automatically hidden
@@ -172,14 +177,12 @@ export const App = (props) => {
     const checkToken = handleRemoteError(async () => {
         await remoteAPI.checkToken(token);
         setPassthrough(<div></div>);
-        window.location.hash = "";
-        window.location.reload();
+        reloadWindow()
     });
     const checkOTP = handleRemoteError(async () => {
         await remoteAPI.checkOTP(token);
         setPassthrough(<div></div>);
-        window.location.hash = "";
-        window.location.reload();
+        reloadWindow()
     });
 
     const userChanged = (u) => setUid(u);
@@ -253,7 +256,7 @@ export const App = (props) => {
             component: <WaitForPermission
                 userid={uid}
                 waitkey={waitKey}
-                onWaitReady={() => location.reload()}
+                onWaitReady={() => reloadWindow()}
                 onNoUser={() => history.replace("/")} />,
             title: "Wait",
             valid: () => uid != "",
