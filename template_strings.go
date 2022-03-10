@@ -47,8 +47,7 @@ h3 {
 		<h3>Signin Request</h3>
 		<div class="answer">No active request found</div>
 </body>
-</html>
-`
+</html>`
 
 const signinAcceptedHTML = `
 <html>
@@ -67,8 +66,7 @@ h3 {
 <body>
 		<h3>Signin Request accepted</h3>
 </body>
-</html>
-`
+</html>`
 
 const emailLinkNotificationTmpl = `
 <html>
