@@ -482,17 +482,19 @@ func (m *MiddlewareApp) sendUser(w http.ResponseWriter, r *http.Request) (rs res
 			}
 
 			if m.OperationMode.isToken() {
-				c, m, rtc := m.sendToken(ue, w, r)
-				if rtc%100 == 2 {
+				c, msg, rtc := m.sendToken(ue, w, r)
+				m.logger.Info("sent token", zap.Int64("created", c), zap.Int("rc", rtc))
+				if rtc/100 == 2 {
 					rs.Data = map[string]string{
 						"created": fmt.Sprintf("%d", c),
 					}
 				}
-				rs.Message, rc = m, rtc
+				rs.Message, rc = msg, rtc
 				return
 			}
 			if m.OperationMode.isOTP() {
 				has, err := m.store.tokensrv.hasUser(m.logger, m.Issuer, ue.UID)
+				m.logger.Info("otp hasuser", zap.Bool("has", has), zap.Error(err))
 				if err != nil {
 					rs.Message = "Unknown error"
 					rc = http.StatusInternalServerError
@@ -504,7 +506,8 @@ func (m *MiddlewareApp) sendUser(w http.ResponseWriter, r *http.Request) (rs res
 			if m.OperationMode.isLink() {
 				var key string
 				key, rs.Message, rc = m.sendYesNoLink(ue, w, r)
-				if rc%100 == 2 {
+				m.logger.Info("sent yesnolink", zap.String("key", key), zap.Int("rc", rc))
+				if rc/100 == 2 {
 					rs.Data = map[string]string{"key": key}
 				}
 				return
