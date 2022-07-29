@@ -9,8 +9,8 @@ const useStyles = makeStyles((theme) =>
     }
     ));
 
-const maxWaitSecs = 10;
-const normalise = (value) => (value * 100 / maxWaitSecs);
+// const maxWaitSecs = 10;
+// const normalise = (value) => (value * 100 / maxWaitSecs);
 
 export const OTPEnter = (props) => {
     const { placeholder, userid, value, onTokenChange, onTokenSubmit, onNoUser } = props;

@@ -1,7 +1,7 @@
 import { TextField } from '@material-ui/core';
 import { createStyles, makeStyles } from '@material-ui/core/styles';
 import React from 'react';
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { RemoteApi } from './RemoteApi';
 
 const remoteAPI = new RemoteApi(location.origin);
@@ -35,6 +35,8 @@ const useStyles = makeStyles((theme) =>
 
 export const Captcha = (props) => {
     const { uid, regtoken } = useParams();
+    const navigate = useNavigate();
+
     const { imgdata, onSolution, onSolutionChange, mode, value } = props;
 
     const checkEnter = (evt) => {
@@ -49,6 +51,11 @@ export const Captcha = (props) => {
     let description = "Enter the image text";
     if (mode == "math") {
         description = "Enter the image solution";
+    }
+
+    if (!imgdata) {
+        navigate("/", { replace: true })
+        return null;
     }
 
     return (

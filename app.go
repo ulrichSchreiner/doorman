@@ -196,8 +196,9 @@ func (m *MiddlewareApp) sendToken(ue *UserEntry, w http.ResponseWriter, r *http.
 		if err := m.sendMessage(ue, "Your login token", spacedToken(m.Spacing, token), "Your token: "+token); err != nil {
 			msg = fmt.Sprintf("Cannot send message: %s", err.Error())
 			rc = http.StatusInternalServerError
+		} else {
+			_ = m.store.tokensrv.newTempToken(m.logger, m.Issuer, ue.UID, fmt.Sprintf("%d", created), time.Duration(m.TokenDuration))
 		}
-		_ = m.store.tokensrv.newTempToken(m.logger, m.Issuer, ue.UID, fmt.Sprintf("%d", created), time.Duration(m.TokenDuration))
 	} else {
 		_, _ = fmt.Sscanf(createdTS, "%d", &created)
 		m.logger.Info("token already sent", zap.String("uid", ue.UID))
@@ -482,8 +483,10 @@ func (m *MiddlewareApp) sendUser(w http.ResponseWriter, r *http.Request) (rs res
 
 			if m.OperationMode.isToken() {
 				c, m, rtc := m.sendToken(ue, w, r)
-				rs.Data = map[string]string{
-					"created": fmt.Sprintf("%d", c),
+				if rtc%100 == 2 {
+					rs.Data = map[string]string{
+						"created": fmt.Sprintf("%d", c),
+					}
 				}
 				rs.Message, rc = m, rtc
 				return
@@ -501,7 +504,9 @@ func (m *MiddlewareApp) sendUser(w http.ResponseWriter, r *http.Request) (rs res
 			if m.OperationMode.isLink() {
 				var key string
 				key, rs.Message, rc = m.sendYesNoLink(ue, w, r)
-				rs.Data = map[string]string{"key": key}
+				if rc%100 == 2 {
+					rs.Data = map[string]string{"key": key}
+				}
 				return
 			}
 		}

@@ -6,7 +6,7 @@ import Typography from '@material-ui/core/Typography';
 import Lock from '@material-ui/icons/Lock';
 import Alert from '@material-ui/lab/Alert';
 import { default as React } from 'react';
-import { Route, Switch, useHistory } from "react-router-dom";
+import { Route, Routes, useNavigate } from "react-router-dom";
 import { Captcha } from './Captcha';
 import { OTPEnter } from './OTPEnter';
 import { RegisterUser } from './RegisterUser';
@@ -79,7 +79,7 @@ const remoteAPI = new RemoteApi(location.origin);
 export const App = (props) => {
     const classes = useStyles();
     const theme = useTheme();
-    const history = useHistory();
+    const navigate = useNavigate();
     const [uid, setUid] = React.useState("");
     const [solution, setSolution] = React.useState("");
     const [imgdata, setImgData] = React.useState(null);
@@ -124,7 +124,11 @@ export const App = (props) => {
             await cb();
         }
         catch (e) {
-            if (e?.data?.captcha) setImgData(e.data.captcha)
+            if (e?.data?.captcha) {
+                setImgData(e.data.captcha)
+            } else {
+                setImgData(null);
+            }
             if (e.message) {
                 setServerMessage(e.message);
                 setShowError(true);
@@ -148,14 +152,14 @@ export const App = (props) => {
         switch (opmode) {
             case "token":
                 setTokenCreated(new Date(parseInt(u.data.created, 10) * 1000));
-                history.push("/enterToken");
+                navigate("/enterToken");
                 return
             case "otp":
-                history.push(u.register ? "/registerUser" : "/enterOTP");
+                navigate(u.register ? "/registerUser" : "/enterOTP");
                 return
             case "link":
                 setWaitKey(u.data?.key);
-                history.push("/waitForPermission");
+                navigate("/waitForPermission");
                 return
         }
     }
@@ -164,7 +168,7 @@ export const App = (props) => {
         if (captchaMode != "") {
             let d = await remoteAPI.createCaptcha();
             setImgData(d.data.captcha);
-            history.push("/captcha");
+            navigate("/captcha");
         } else {
             await sendUserSolution(uid, solution);
         }
@@ -198,7 +202,7 @@ export const App = (props) => {
             exact: true,
             component: <RegisterUser
                 userid={uid}
-                onNoUser={() => history.replace("/")}
+                onNoUser={() => navigate("/", { replace: true })}
             />,
             title: "Register",
             nextLabel: "Register",
@@ -209,7 +213,7 @@ export const App = (props) => {
             path: "/signup/:uid/:regtoken",
             exact: true,
             component: <Signup
-                onValidateOk={() => history.replace("/")}
+                onValidateOk={() => navigate("/", { replace: true })}
             />,
             title: "Signup",
             nextLabel: null,
@@ -225,8 +229,8 @@ export const App = (props) => {
                 userid={uid}
                 waitSecs={waitSecs}
                 tokenCreated={tokenCreated}
-                onNoUser={() => history.replace("/")}
-                onTimeout={() => history.replace("/")}
+                onNoUser={() => navigate("/", { replace: true })}
+                onTimeout={() => navigate("/", { replace: true })}
                 onTokenChange={(t) => setToken(t)}
                 onTokenSubmit={checkToken}
             />,
@@ -242,7 +246,7 @@ export const App = (props) => {
                 placeholder="OTP"
                 value={token}
                 userid={uid}
-                onNoUser={() => history.replace("/")}
+                onNoUser={() => navigate("/", { replace: true })}
                 onTokenChange={(t) => setToken(t)}
                 onTokenSubmit={checkOTP}
             />,
@@ -257,7 +261,7 @@ export const App = (props) => {
                 userid={uid}
                 waitkey={waitKey}
                 onWaitReady={() => reloadWindow()}
-                onNoUser={() => history.replace("/")} />,
+                onNoUser={() => navigate("/", { replace: true })} />,
             title: "Wait",
             valid: () => uid != "",
             submit: () => { },
@@ -274,7 +278,7 @@ export const App = (props) => {
             />,
             title: "I'm not a robot",
             nextLabel: "Next",
-            valid: () => solution != "",
+            valid: () => (solution != ""),
             submit: solutionEntered,
         },
         {
@@ -301,36 +305,30 @@ export const App = (props) => {
             <div className={classes.root}>
                 <Paper square elevation={0} className={classes.header}>
                     <Typography className={classes.headerLabel}>
-                        <Route>
-                            <Switch>
-                                {routes.map((route, i) => (
-                                    <Route key={i} path={route.path} >{route.title}</Route>
-                                ))}
-                            </Switch>
-                        </Route>
+                        <Routes>
+                            {routes.map((route, i) => (
+                                <Route key={i} path={route.path} element={<React.Fragment>{route.title}</React.Fragment>}></Route>
+                            ))}
+                        </Routes>
                     </Typography>
                 </Paper>
-                <Route>
-                    <Switch>
-                        {routes.map((route, i) => (
-                            <Route key={i} path={route.path} >{route.component}</Route>
-                        ))}
-                    </Switch>
-                </Route>
+                <Routes>
+                    {routes.map((route, i) => (
+                        <Route key={i} path={route.path} element={route.component} />
+                    ))}
+                </Routes>
                 <div className={classes.buttonbar}>
-                    <Route>
-                        <Switch>
-                            {routes.map((route, i) => (
-                                <Route key={i} path={route.path} >
-                                    {route.nextLabel && <Button
-                                        onClick={route.submit}
-                                        disabled={!route.valid()}>
-                                        {route.nextLabel}
-                                    </Button>}
-                                </Route>
-                            ))}
-                        </Switch>
-                    </Route>
+                    <Routes>
+                        {routes.filter(r => r.nextLabel != "").map((route, i) => (
+                            <Route key={i} path={route.path} element={
+                                <Button
+                                    onClick={route.submit}
+                                    disabled={!route.valid()}>
+                                    {route.nextLabel}
+                                </Button>}>
+                            </Route>
+                        ))}
+                    </Routes>
                 </div>
                 <div className={classes.policyFooter}>
                     {privacyURL != "" && <div><a target="_blank" href={privacyURL}>Privacy policy</a></div>}
@@ -338,7 +336,7 @@ export const App = (props) => {
                 </div>
                 <Snackbar
                     anchorOrigin={{ vertical: "top", horizontal: "center" }}
-                    open={showError} autoHideDuration={5000} onClose={handleCloseError}>
+                    open={showError} autoHideDuration={10000} onClose={handleCloseError}>
                     <Alert onClose={handleCloseError} severity="error">
                         {serverMessage}
                     </Alert>
