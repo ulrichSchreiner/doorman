@@ -1,4 +1,4 @@
-module gitlab.com/ulrichSchreiner/doorman
+module github.com/ulrichSchreiner/doorman
 
 go 1.20
 
