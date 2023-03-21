@@ -2,12 +2,12 @@ package doorman
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"image/png"
-	"math/rand"
 	"time"
 
 	"github.com/pquerna/otp"

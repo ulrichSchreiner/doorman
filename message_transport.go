@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -150,7 +149,7 @@ func (um *URLMsgConfig) Send(lg *zap.Logger, a addressable, subject, shortmessag
 		return "", fmt.Errorf("cannot do request: %v", err)
 	}
 	defer rsp.Body.Close()
-	content, err := ioutil.ReadAll(rsp.Body)
+	content, err := io.ReadAll(rsp.Body)
 	if err != nil {
 		return "", fmt.Errorf("cannot read response: %v", err)
 	}

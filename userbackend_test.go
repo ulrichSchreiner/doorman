@@ -2,7 +2,6 @@ package doorman
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"reflect"
 	"testing"
@@ -11,7 +10,7 @@ import (
 )
 
 func generateTestScript(t *testing.T, content string) string {
-	tmpfile, err := ioutil.TempFile("", "script")
+	tmpfile, err := os.CreateTemp("", "script")
 	if err != nil {
 		t.Fatal(err)
 	}

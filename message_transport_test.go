@@ -1,7 +1,7 @@
 package doorman
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -146,7 +146,7 @@ func TestURLMessenger(t *testing.T) {
 					t.Errorf("want method %q but got %q", tt.method, req.Method)
 				}
 				if tt.wantBody != "" {
-					dat, _ := ioutil.ReadAll(req.Body)
+					dat, _ := io.ReadAll(req.Body)
 					if string(dat) != tt.wantBody {
 						t.Errorf("want body %q but got %q", tt.wantBody, dat)
 					}
