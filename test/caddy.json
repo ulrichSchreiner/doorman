@@ -69,7 +69,7 @@
             "cookie_hash": "tga7Y9FC/4R8lm6abiPZCbqOYS4Pz4H4ql6AoIx6yMMmLSZhrS4ZihiLKlTl5Bcjx8fBkuWE4FDkvdISeVEjNQ==",
             "insecure_cookie": true,
             "channels": [
-                "clipboard",
+                "wl-clipboard",
                 "standard-smtp",
                 "smsgateway",
                 "local url tester",
@@ -90,6 +90,16 @@
                             "url_template": "{env.SMS_GATEWAY_URL1}&body=\\{\\{.message}}&from=Doorman&to=\\{\\{.tomobile}}",
                             "method": "GET",
                             "insecure": false
+                        }
+                    },
+                    {
+                        "type": "command",
+                        "name": "wl-clipboard",
+                        "spec": {
+                            "command": "/usr/bin/wl-copy",
+                            "use_stdin": true,
+                            "wait": false,
+                            "args": []
                         }
                     },
                     {
@@ -161,13 +171,38 @@
                 }
             }
         },
+        "tls": {
+            "certificates": {
+                "load_files": [
+                    {
+                        "certificate": "./test/server.crt",
+                        "key": "./test/server.key",
+                        "tags": [
+                            "default"
+                        ]
+                    }
+                ]
+            }
+        },
         "http": {
             "servers": {
                 "example": {
                     "listen": [
-                        ":2015"
+                        "0.0.0.0:2015"
                     ],
-                    "experimental_http3": true,
+                    "automatic_https": {
+                        "disable": false,
+                        "disable_redirects": true
+                    },
+                    "tls_connection_policies": [
+                        {
+                            "certificate_selection": {
+                                "any_tag": [
+                                    "default"
+                                ]
+                            }
+                        }
+                    ],
                     "routes": [
                         {
                             "handle": [
