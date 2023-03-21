@@ -55,6 +55,7 @@ type StdinMsgConfig struct {
 	Command  string   `json:"command"`
 	Args     []string `json:"args,omitempty"`
 	UseStdin bool     `json:"use_stdin"`
+	Wait     bool     `json:"wait"`
 }
 
 func newStdin(cfg StdinMsgConfig, rpl *caddy.Replacer) (*StdinMsgConfig, error) {
@@ -84,6 +85,12 @@ func (std *StdinMsgConfig) Send(lg *zap.Logger, a addressable, subject, shortmes
 		}
 	}()
 
+	if !std.Wait {
+		go func() {
+			_, _ = c.CombinedOutput()
+		}()
+		return "", nil
+	}
 	out, err := c.CombinedOutput()
 	if err != nil {
 		return "", err
