@@ -1,6 +1,7 @@
 package doorman
 
 import (
+	"sync"
 	"testing"
 	"time"
 
@@ -142,6 +143,59 @@ func Test_memstore_GetPut(t *testing.T) {
 					t.Errorf("memstore.Del() should have deleted the key: %v", getkey)
 				}
 			}
+		})
+	}
+}
+
+func Test_YesNoWaiter(t *testing.T) {
+	tests := []struct {
+		name string
+		cmd  string
+		yes  bool
+	}{
+		{
+			name: "say yes",
+			cmd:  "yes",
+			yes:  true,
+		},
+		{
+			name: "say YES",
+			cmd:  "YES",
+			yes:  true,
+		},
+		{
+			name: "say no",
+			cmd:  "no",
+			yes:  false,
+		},
+		{
+			name: "say random",
+			cmd:  "random",
+			yes:  false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := newYesNo()
+			cmd := yesno(tt.cmd)
+			var wg sync.WaitGroup
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				yn, err := w.WaitFor()
+				if err != nil {
+					t.Errorf("wait returned error: %v", err)
+					return
+				}
+				if *yn != cmd {
+					t.Errorf("wait returned %v, want %v", yn, cmd)
+				}
+				if yn.Yes() != tt.yes {
+					t.Errorf("yes returned %v, want %v", yn.Yes(), tt.yes)
+				}
+			}()
+			w.Say(cmd)
+			wg.Wait()
 		})
 	}
 }
