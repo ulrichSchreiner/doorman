@@ -14,10 +14,10 @@
             "imprint_url": "http://www.example.com/imprint",
             "privacy_policy_url": "http://www.example.com/privacy",
             "spacing": "",
-            "operation_mode": "token",
+            "operation_mode": "link",
             "captcha_mode": "math",
             "issuer": "Doorman",
-            "issuer_base": "http://localhost:2015",
+            "issuer_base": "https://localhost:2015",
             "token_duration": "60s",
             "access_duration": "60s",
             "users": [
@@ -69,8 +69,8 @@
             "cookie_hash": "tga7Y9FC/4R8lm6abiPZCbqOYS4Pz4H4ql6AoIx6yMMmLSZhrS4ZihiLKlTl5Bcjx8fBkuWE4FDkvdISeVEjNQ==",
             "insecure_cookie": true,
             "channels": [
-                "wl-clipboard",
                 "standard-smtp",
+                "wl-clipboard",
                 "smsgateway",
                 "local url tester",
                 "mailgun"

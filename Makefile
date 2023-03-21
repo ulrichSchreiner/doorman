@@ -2,6 +2,10 @@
 WEBAPPS := $(dir $(wildcard **/*/webapp/package.json))
 BINARY := doorman
 
+export SMTP_SERVER=localhost:2525
+export SMTP_SERVER_USER=
+export SMTP_SERVER_PASSWORD=
+
 define compile_and_run_target
     rm -rf $(HOME)/tmp/modd-$(1).conf
 	mkdir -p $(HOME)/tmp
@@ -69,6 +73,10 @@ keydb-ephemeral:
 .PHONY:
 redis-cli:
 	docker exec -it doorman-keydb redis-cli
+
+.PHONY:
+smtp4dev:
+	docker run --rm -it -p 3000:80 -p 2525:25 rnwood/smtp4dev
 
 .PHONY:
 install-devtools-arch:

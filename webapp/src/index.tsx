@@ -1,7 +1,8 @@
 
+import '@fontsource/public-sans';
 import '@fortawesome/fontawesome-free/css/all.css';
 import "core-js/stable";
-import { default as React } from 'react';
+import * as React from 'react';
 import * as ReactDOM from "react-dom";
 import {
     HashRouter as Router

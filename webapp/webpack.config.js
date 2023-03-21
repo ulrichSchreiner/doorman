@@ -2,30 +2,39 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const path = require("path");
 
 module.exports = {
+    entry: {
+        index: './src/index.tsx',
+    },
     module: {
         rules: [
             {
-                test: /\.css$/,
-                use: ["style-loader", "css-loader"]
-            },
-            {
-                test: /\.js$/,
+                test: /\.(ts|tsx)$/,
+                use: 'ts-loader',
                 exclude: /node_modules/,
-                use: ["babel-loader"]
             },
             {
-                test: /\.(png|svg|jpg|gif)$/,
+                test: /\.css$/,
                 use: [
-                    'file-loader'
+                    { loader: "style-loader" },
+                    { loader: "css-loader" }
                 ]
+            },
+            {
+                test: /\.(png|jpg|svg)$/,
+                type: 'asset/resource',
             },
             {
                 test: /\.(woff|woff2|eot|ttf|otf)$/,
-                use: [
-                    'file-loader'
-                ]
-            }
-        ]
+                type: 'asset/resource',
+            },
+        ],
+    },
+    resolve: {
+        extensions: ['.tsx', '.ts', '...'],
+        modules: [
+            path.resolve("./node_modules"),
+            path.resolve("./src"),
+        ],
     },
     optimization: {
         splitChunks: { chunks: "all" }
@@ -33,7 +42,8 @@ module.exports = {
     devtool: 'inline-source-map',
     plugins: [
         new HtmlWebpackPlugin({
-            template: path.resolve(__dirname, "src", "index.html")
+            template: path.resolve(__dirname, "src", "index.html"),
+            title: "Doorman"
         })
     ],
     output: {

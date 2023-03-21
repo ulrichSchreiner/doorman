@@ -8,6 +8,7 @@ const handleResponse = (response => {
 const dmrequest = "__dm_request__";
 
 export class RemoteApi {
+    base: string
     constructor(base) {
         this.base = base;
     }
@@ -16,7 +17,7 @@ export class RemoteApi {
         let fd = new FormData();
         fd.append("uid", uid);
         fd.append("captcha", captcha);
-        fd.append(dmrequest, 1);
+        fd.append(dmrequest, "1");
 
         return fetch(this.base + `/sendUser?${dmrequest}=1`, {
             method: 'POST',

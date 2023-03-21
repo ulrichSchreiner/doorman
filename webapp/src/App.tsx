@@ -1,11 +1,6 @@
-import { Snackbar } from '@material-ui/core';
-import Button from '@material-ui/core/Button';
-import Paper from '@material-ui/core/Paper';
-import { createStyles, makeStyles, useTheme } from '@material-ui/core/styles';
-import Typography from '@material-ui/core/Typography';
-import Lock from '@material-ui/icons/Lock';
-import Alert from '@material-ui/lab/Alert';
-import { default as React } from 'react';
+import LockPersonIcon from '@mui/icons-material/LockPerson';
+import { Alert, Box, Button, Sheet, Typography } from '@mui/joy';
+import * as React from 'react';
 import { Route, Routes, useNavigate } from "react-router-dom";
 import { Captcha } from './Captcha';
 import { OTPEnter } from './OTPEnter';
@@ -17,68 +12,9 @@ import { User } from './User';
 import { WaitForPermission } from './WaitForPermission';
 
 
-const topBorder = 70;
-
-const useStyles = makeStyles((theme) =>
-    createStyles({
-        root: {
-            flexGrow: 1,
-            maxWidth: 300,
-            minWidth: 300,
-            borderRadius: 10,
-            padding: 5,
-            zIndex: 10,
-        },
-        elementStack: {
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-        },
-        iconTop: {
-            borderRadius: "50%",
-            border: "1px solid grey",
-            backgroundColor: "white",
-            textAlign: "center",
-            marginBottom: -20,
-            marginTop: topBorder,
-            padding: 5,
-            zIndex: 11,
-        },
-        policyFooter: {
-            display: 'flex',
-            alignItems: 'center',
-            fontSize: "80%",
-            justifyContent: "space-around",
-            marginTop: 20,
-            fontFamily: 'Roboto',
-        },
-        header: {
-            display: 'flex',
-            alignItems: 'center',
-            height: 55,
-            backgroundColor: "#0c609c",
-            color: "white",
-            fontSize: "90%",
-            borderRadius: 5,
-            justifyContent: "center",
-            marginBottom: 2,
-        },
-        headerLabel: {
-        },
-        buttonbar: {
-            display: 'flex',
-            justifyContent: "space-around",
-            textAlign: "center",
-            marginTop: 10,
-        }
-    }),
-);
-
 const remoteAPI = new RemoteApi(location.origin);
 
 export const App = (props) => {
-    const classes = useStyles();
-    const theme = useTheme();
     const navigate = useNavigate();
     const [uid, setUid] = React.useState("");
     const [solution, setSolution] = React.useState("");
@@ -110,12 +46,7 @@ export const App = (props) => {
         window.location.reload();
     }
 
-    const handleCloseError = (event, reason) => {
-        if (reason === 'clickaway') {
-            // show errors a few seconds until they are automatically hidden
-            return;
-        }
-
+    const handleCloseError = () => {
         setShowError(false);
     };
 
@@ -142,13 +73,13 @@ export const App = (props) => {
 
     const sendUserSolution = async (uid, solution) => {
         setSolution(""); // clear the solution in the UI
+        setShowError(false);
+        setToken("");
         let u = await remoteAPI.sendUser(uid, solution);
         if (u.reload) {
             location.reload();
             return
         }
-        setShowError(false);
-        setToken("");
         switch (opmode) {
             case "token":
                 setTokenCreated(new Date(parseInt(u.data.created, 10) * 1000));
@@ -213,10 +144,11 @@ export const App = (props) => {
             path: "/signup/:uid/:regtoken",
             exact: true,
             component: <Signup
+                placeholder="Token"
                 onValidateOk={() => navigate("/", { replace: true })}
             />,
             title: "Signup",
-            nextLabel: null,
+            nextLabel: "",
             valid: () => true,
             submit: () => { }
         },
@@ -264,12 +196,14 @@ export const App = (props) => {
                 onNoUser={() => navigate("/", { replace: true })} />,
             title: "Wait",
             valid: () => uid != "",
+            nextLabel: "",
             submit: () => { },
         },
         {
             path: "/captcha",
             exact: true,
             component: <Captcha
+                placeholder="Solution"
                 mode={captchaMode}
                 value={solution}
                 imgdata={imgdata}
@@ -300,24 +234,82 @@ export const App = (props) => {
     if (passthrough != null) return passthrough;
 
     return (
-        <div className={classes.elementStack}>
-            <div className={classes.iconTop}><Lock /></div>
-            <div className={classes.root}>
-                <Paper square elevation={0} className={classes.header}>
-                    <Typography className={classes.headerLabel}>
+        <Box
+            sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center"
+            }}>
+            {showError && <Box sx={{ position: "fixed", display: 'flex', flexDirection: 'column', gap: 2, width: '100%', maxWidth: "350px" }}>
+
+                <Alert
+                    variant="soft" color="danger"
+                    endDecorator={
+                        <Button
+                            onClick={handleCloseError}
+                            size="sm"
+                            variant="outlined"
+                            color="danger"
+                            sx={{
+                                textTransform: 'uppercase',
+                                fontSize: 'xs',
+                                fontWeight: 'xl',
+                            }}
+                        >
+                            Close
+                        </Button>
+                    }>
+                    {serverMessage}
+                </Alert>
+            </Box>}
+            <Box
+                sx={{
+                    borderRadius: "50%",
+                    border: "1px solid grey",
+                    backgroundColor: "white",
+                    textAlign: "center",
+                    marginBottom: "-20px",
+                    marginTop: "70px",
+                    padding: "5px",
+                    zIndex: 11
+                }}><LockPersonIcon /></Box>
+            <Box sx={{
+                flexGrow: 1,
+                maxWidth: 300,
+                minWidth: 300,
+                borderRadius: "10px",
+                padding: "5px",
+                zIndex: 10
+            }}>
+                <Sheet variant='soft' sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    height: "55px",
+                    color: "white",
+                    fontSize: "90%",
+                    borderRadius: "8px",
+                    justifyContent: "center",
+                    marginBottom: "4px"
+                }}>
+                    <Typography >
                         <Routes>
                             {routes.map((route, i) => (
                                 <Route key={i} path={route.path} element={<React.Fragment>{route.title}</React.Fragment>}></Route>
                             ))}
                         </Routes>
                     </Typography>
-                </Paper>
+                </Sheet>
                 <Routes>
                     {routes.map((route, i) => (
                         <Route key={i} path={route.path} element={route.component} />
                     ))}
                 </Routes>
-                <div className={classes.buttonbar}>
+                <Box sx={{
+                    display: 'flex',
+                    justifyContent: "space-around",
+                    textAlign: "center",
+                    marginTop: "10px"
+                }}>
                     <Routes>
                         {routes.filter(r => r.nextLabel != "").map((route, i) => (
                             <Route key={i} path={route.path} element={
@@ -329,20 +321,21 @@ export const App = (props) => {
                             </Route>
                         ))}
                     </Routes>
-                </div>
-                <div className={classes.policyFooter}>
+                </Box>
+                <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    fontSize: "80%",
+                    justifyContent: "space-around",
+                    marginTop: "20px",
+                    fontFamily: 'Roboto'
+                }}>
                     {privacyURL != "" && <div><a target="_blank" href={privacyURL}>Privacy policy</a></div>}
                     {imprintURL != "" && <div><a target="_blank" href={imprintURL}>Imprint</a></div>}
-                </div>
-                <Snackbar
-                    anchorOrigin={{ vertical: "top", horizontal: "center" }}
-                    open={showError} autoHideDuration={10000} onClose={handleCloseError}>
-                    <Alert onClose={handleCloseError} severity="error">
-                        {serverMessage}
-                    </Alert>
-                </Snackbar>
-            </div>
-        </div>
+                </Box>
+
+            </Box>
+        </Box>
     )
 
 }
